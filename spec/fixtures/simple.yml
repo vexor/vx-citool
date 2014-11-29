@@ -1,0 +1,17 @@
+- name: "export env"
+  environment:
+    RAILS_ENV: test
+    RACK_ENV: test
+
+- name: "clone"
+  tasks:
+  - ssh_agent: >
+      key="key"
+
+  - git_clone: >
+      repo=git@github.com:vexor/vx-test-repo.git
+      dest=~/vexor/vx-test-repo
+      sha=43048129a832a055dbd293a27de343a162609159
+
+- name: "install"
+  chdir: "~/vexor/vx-test-repo"
