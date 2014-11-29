@@ -12,4 +12,5 @@ file =
     File.read(source)
   end
 
-Vx::Citool.process file
+re = Vx::Citool.process file
+exit(re ? re.code : 0)

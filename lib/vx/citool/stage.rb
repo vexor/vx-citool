@@ -20,6 +20,10 @@ module Vx
         name == 'teardown'
       end
 
+      def script?
+        name == 'script'
+      end
+
       def invoke
         log_stage name do
           if chdir
@@ -55,7 +59,7 @@ module Vx
         re = nil
         tasks.each do |task|
           k,v = task.to_a.flatten
-          log_debug "#{k} | #{v.strip}"
+          log_debug "#{k} | #{v.inspect}"
           re = invoke_action(k, v)
 
           if re.success?

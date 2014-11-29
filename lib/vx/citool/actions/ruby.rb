@@ -72,10 +72,9 @@ test:
           def create
             re = nil
 
-            if gemfile.gem?(:rails) and File.exists?("config/application.rb")
+            if gemfile.gem?(:rails) and File.exists?("config/application.rb") and !database_ci
               re =
                 (
-                  copy_database_ci     ||
                   create_pg_config     ||
                   create_mysql2_config ||
                   create_sqlite3_config
@@ -110,37 +109,35 @@ test:
             re
           end
 
-          def copy_database_ci
-            if File.exists?("config/database.yml.ci")
-              re = owner.invoke_shell("cp -f config/database.yml.ci config/database.yml")
-              re.success?
-            end
+          # TODO: remove
+          def database_ci
+            File.exists?("config/database.yml.ci")
           end
 
-          def create_mongoid
+          def create_mongoid_config
             File.open("config/mongoid.yml", 'w') {|io| io.write MONGOID_CONFIG.strip }
-            log_notice "create config/mongoid.yml"
+            owner.log_notice "create config/mongoid.yml"
             FileUtils.ln_s File.expand_path("config/mongoid.yml"), File.expand_path("mongoid.yml")
-            invoke_shell("sudo service mongodb start")
+            owner.invoke_shell("sudo service mongodb start")
           end
 
           def create_pg_config
             if gemfile.gem?("pg")
-              log_notice "create config/database.yml for postgres"
+              owner.log_notice "create config/database.yml for postgres"
               File.open('config/database.yml', 'w') { |io| io.write PG_CONFIG.strip }
             end
           end
 
           def create_mysql2_config
             if gemfile.gem?("mysql2")
-              log_notice "create config/database.yml for mysql"
+              owner.log_notice "create config/database.yml for mysql"
               File.open('config/database.yml', 'w') { |io| io.write MYSQL2_CONFIG.strip }
             end
           end
 
           def create_sqlite3_config
             if gemfile.gem?("sqlite3")
-              log_notice "create config/database.yml for sqlite"
+              owner.log_notice "create config/database.yml for sqlite"
               File.open('config/database.yml', 'w') { |io| io.write SQLITE3_CONFIG.strip }
             end
           end
@@ -149,17 +146,21 @@ test:
       end
 
       def invoke_ruby(args, options = {})
-        args = extract_keys(args, :ruby, :bundler_args)
-
         gemfile  = Ruby::Gemfile.new
         database = Ruby::Database.new self, gemfile
-        action   = args[:rest]
+
+        if args.is_a?(String)
+          action = args
+          args   = {}
+        else
+          action = args["action"]
+        end
 
         case action
 
         when "install"
-          version = gemfile.ruby_version || args[:ruby]
-          invoke_vxvm("lang=ruby version=#{version}")
+          version = gemfile.ruby_version || args["ruby"]
+          invoke_vxvm("ruby #{version}")
 
         when 'announce'
           re = invoke_shell("ruby --version")
@@ -174,7 +175,7 @@ test:
           re
 
         when "bundle:install"
-          invoke_shell "bundle check || bundle install #{args[:bundler_args] || DEFAULT_BUNDLER_ARGS}"
+          invoke_shell "bundle check || bundle install #{args["bundler_args"] || DEFAULT_BUNDLER_ARGS}"
 
         when "rails:database"
           database.create

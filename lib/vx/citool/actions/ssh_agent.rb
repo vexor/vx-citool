@@ -1,4 +1,6 @@
 require 'fileutils'
+require 'socket'
+require 'timeout'
 
 module Vx
   module Citool
@@ -6,8 +8,8 @@ module Vx
 
       def invoke_ssh_agent(args, options = {} )
         ssh_dir    = File.expand_path("~/.ssh")
-        args       = extract_keys(args, :key)
-        ssh_key    = args[:key]
+        ssh_key    = args["key"]
+
         if ssh_key[0] == "$"
           ssh_key = ssh_key.sub("$", '')
           ssh_key = options[:vars][ssh_key]
@@ -36,9 +38,8 @@ module Vx
         log_debug "start ssh agent at #{agent_sock}"
         FileUtils.rm_f agent_sock
 
-        pid = Process.fork do
-          exec "sh -c 'ssh-agent -d -a #{agent_sock} > /dev/null'"
-        end
+        cmd = "ssh-agent -d -a #{agent_sock}"
+        pid = Process.spawn(cmd, out: "/dev/null", err: "/dev/null")
 
         ENV['SSH_AUTH_SOCK'] = agent_sock
 
@@ -47,6 +48,24 @@ module Vx
           Process.kill("KILL", pid)
           Process.wait(pid)
           FileUtils.rm_f agent_sock
+        end
+
+        # wait agent
+        begin
+          Timeout.timeout(5) do
+            loop do
+              sleep 0.1
+              begin
+                s = ::UNIXSocket.new(agent_sock)
+                unless s.nil?
+                  s.close
+                  break
+                end
+              rescue Errno::ENOENT, Errno::ECONNREFUSED, Errno::EBADF
+              end
+            end
+          end
+        rescue Timeout::TimeoutError
         end
 
         re = invoke_shell("ssh-add #{ssh_dir}/id_rsa", silent: true)

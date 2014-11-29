@@ -1,7 +1,6 @@
 require 'yaml'
 
 require File.expand_path("../citool/log",        __FILE__)
-require File.expand_path("../citool/parser",     __FILE__)
 require File.expand_path("../citool/actions",    __FILE__)
 require File.expand_path("../citool/stage",      __FILE__)
 require File.expand_path("../citool/string",     __FILE__)
@@ -26,6 +25,9 @@ module Vx
 
     def process(content)
       yaml = YAML.load(content)
+      state_file = File.expand_path("~/.ci_state")
+
+      File.open(state_file, 'w') {|io| io.write "before_script" }
 
       re = nil
       begin
@@ -43,7 +45,12 @@ module Vx
         end
 
         stages.each do |stage|
-          re    = stage.invoke
+
+          if stage.script?
+            File.open(state_file, 'w') {|io| io.write "script" }
+          end
+
+          re = stage.invoke
           break unless re.success?
         end
 
@@ -56,6 +63,7 @@ module Vx
         @@teardown.map(&:call)
       end
 
+      re
     end
 
     def finish(re)

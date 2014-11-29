@@ -3,17 +3,13 @@ module Vx
 
     module Actions
       def invoke_services(args, options = {})
-        args = extract_keys(args)
-
-        services = args[:rest].strip.split(" ")
-
         re = nil
-        services.each do |srv|
+        Array(args).each do |srv|
           re = invoke_shell("sudo service #{srv} start")
           return re unless re.success?
         end
 
-        if services.any?
+        if Array(args).any?
           re = invoke_shell "sleep 3"
           return re unless re.success?
         end

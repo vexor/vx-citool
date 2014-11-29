@@ -30,20 +30,26 @@
       -----END RSA PRIVATE KEY-----
 
   tasks:
-  - ssh_agent: >
-      key=$ssh_key
+  - ssh_agent:
+      key: $ssh_key
 
-  - git_clone: >
-      repo=git@github.com:vexor/vx-test-repo.git
-      dest=~/vexor/vx-test-repo
-      branch=lang/ruby-rails-pg
-      sha=8df02f697304d22b0170f006d01dd853f17fee52
+  - git_clone:
+      repo: git@github.com:vexor/vx-test-repo.git
+      dest: ~/vexor/vx-test-repo
+      branch: lang/ruby-rails-pg
+      sha: 8df02f697304d22b0170f006d01dd853f17fee52
 
 - name: "init"
   chdir: "~/vexor/vx-test-repo"
   tasks:
-  - cache_fetch: http://127.0.0.1:8000/branch.tgz http://127.0.0.1:8000/master.tgz
-  - cache_add: ~/.rubygems node_modules
+  - cache_fetch:
+      url:
+      - http://127.0.0.1:8000/branch.tgz
+      - http://127.0.0.1:8000/master.tgz
+  - cache_add:
+      dir:
+      - ~/.rubygems
+      - node_modules
 
 - name: "install"
   environment:
@@ -53,18 +59,25 @@
     RACK_ENV:       test
 
   tasks:
-  - ruby: install ruby=2.1.0
-  - ruby: announce
-  - ruby: bundle:install
+  - ruby:
+      do: install
+      ruby: "2.1.0"
+  - ruby:
+      do: announce
+  - ruby:
+      do: bundle:install
 
 - name: "database"
   tasks:
-  - ruby: rails:database
+  - ruby:
+      do: rails:database
 
 - name: "script"
   tasks:
-  - ruby: script
+  - ruby:
+      do: script
 
 - name: "teardown"
   tasks:
-  - cache_push: http://127.0.0.1:8000/branch.tgz
+  - cache_push:
+      url: http://127.0.0.1:8000/branch.tgz
