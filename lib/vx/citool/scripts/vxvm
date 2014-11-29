@@ -1,0 +1,174 @@
+#!/bin/bash
+
+set -e
+
+#
+pkg_prefix="vx-packages-"
+pkg_metadata="/dists/trusty/main/binary-amd64/Packages"
+pkg_host=${PKG_HOST:-http://mirror.pkg.vexor.io}
+pkg_install_path="/opt/vexor/packages"
+
+#
+awk=${AWK:-awk}
+curl="curl --fail --silent --show-error --tcp-nodelay --retry 3"
+mktemp="mktemp"
+
+dpkg="dpkg"
+
+if [ "x$(uname)" = "xDarwin" ] ; then
+  awk="gawk"
+  mktemp="mktemp -t vx"
+fi
+
+if [ "x$(id -u)" != "x0" ] ; then
+  dpkg="sudo dpkg"
+fi
+
+package_path=""
+package_name=""
+
+function sedeasy {
+  sed -i "s/$(echo $1 | sed -e 's/\([[\/.*]\|\]\)/\\&/g')/$(echo $2 | sed -e 's/[\/&]/\\&/g')/g"
+}
+
+echoerr() {
+  echo "$@" 1>&2;
+}
+
+silent_output () {
+  local cmd=$@
+  local log=$($mktemp)
+
+  local rs=$( ( $cmd > $log 2> $log && echo "ok" ) || echo "fail" )
+
+  if [ "$rs" = "fail" ] ; then
+    echoerr "failed: $cmd"
+    echoerr ""
+    cat $log
+    rm $log
+    exit 1
+  fi
+}
+
+vxvm_search_in_repo () {
+  local lang=$1
+  local version=$2
+  local regexp="${pkg_prefix}${lang}-${version}"
+
+  # download metadata
+  local metadata=$($mktemp)
+  $curl $pkg_host/$pkg_metadata |  \
+    $awk '/Package/{ print $2} ; /Filename/ { print $2 }' | \
+    xargs -n2 | \
+    sort -r > $metadata
+
+  # strict match
+  package_path=$(cat $metadata | $awk -v ref="$regexp " 'match($0, ref){ print $2 }' | head -n1)
+  package_name=$(cat $metadata | $awk -v ref="$regexp " 'match($0, ref){ print $1 }' | head -n1)
+
+  if [ "x$package_name" = "x" ] ; then
+    # fuzzy match
+    package_path=$(cat $metadata | sort -r | $awk -v ref="$regexp" 'match($0, ref){ print $2}' | head -n1)
+    package_name=$(cat $metadata | sort -r | $awk -v ref="$regexp" 'match($0, ref){ print $1}' | head -n1)
+  fi
+
+  rm $metadata
+}
+
+vxvm_extract_id () {
+  echo  $package_name | sed -e "s/${pkg_prefix}//g"
+}
+
+vxvm_valid_package_url () {
+  if [ "x$package_path" = "x" ] ; then
+    echoerr "cannot found $lang $version"
+    exit 1
+  fi
+}
+
+vxvm_usage () {
+  cat <<EOF
+  Usage vxvm $1 <lang> <version>
+EOF
+  exit 1
+}
+
+vxvm_search () {
+  local lang=$1
+  local version=$2
+
+  test "x$lang" = "x" && vxvm_usage "search"
+  test "x$version" = "x" && vxvm_usage "search"
+
+  vxvm_search_in_repo $lang $version
+  vxvm_valid_package_url
+
+  echo "Version:  $(vxvm_extract_id)"
+  echo "Location: $pkg_host/${package_path}"
+  echo "Install:  ${pkg_install_path}/$(vxvm_extract_id)"
+}
+
+vxvm_install () {
+  local lang=$1
+  local version=$2
+
+  test "x$lang" = "x" && vxvm_usage "install"
+  test "x$version" = "x" && vxvm_usage "install"
+
+  vxvm_search_in_repo $lang $version
+  vxvm_valid_package_url
+
+  local id=$(vxvm_extract_id)
+
+  if [ ! -d $pkg_install_path/$id ] ; then
+    local tmp_dir=$($mktemp -d)
+    local tmp_file=$tmp_dir/$package_name
+
+    $curl $pkg_host/$package_path > $tmp_file
+    silent_output $dpkg -i $tmp_file
+    rm -rf $tmp_dir
+  fi
+
+  echo $pkg_install_path/$id/activate
+}
+
+vxvm_location () {
+  local lang=$1
+  local version=$2
+
+  test "x$lang" = "x" && vxvm_usage "location"
+  test "x$version" = "x" && vxvm_usage "location"
+
+  vxvm_search_in_repo $lang $version
+  vxvm_valid_package_url
+
+  local id=$(vxvm_extract_id)
+
+
+  test -d $pkg_install_path/$id && (
+    echo $pkg_install_path/$id
+    exit 0
+  )
+
+  test -d $pkg_install_path/$id || (
+    echoerr "cannot found $lang $version"
+    exit 1
+  )
+}
+
+case $1 in
+  search)
+    vxvm_search $2 $3
+    ;;
+  install)
+    vxvm_install $2 $3
+    ;;
+  location)
+    vxvm_location $2 $3
+    ;;
+  *)
+    echo "Usage vxvm (search|install|location)"
+    ;;
+esac
+
+

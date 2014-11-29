@@ -1,20 +1,21 @@
-require File.expand_path("../log",                __FILE__)
-require File.expand_path("../parser",             __FILE__)
 require File.expand_path("../actions/shell",      __FILE__)
 require File.expand_path("../actions/ssh_agent",  __FILE__)
 require File.expand_path("../actions/git_clone",  __FILE__)
 require File.expand_path("../actions/chdir",      __FILE__)
-
+require File.expand_path("../actions/vxvm",       __FILE__)
+require File.expand_path("../actions/ruby",       __FILE__)
+require File.expand_path("../actions/cache",      __FILE__)
+require File.expand_path("../actions/services",   __FILE__)
 
 module Vx
   module Citool
     module Actions
 
-      Succ = Struct.new(:code, :message) do
+      Succ = Struct.new(:code, :message, :data) do
         def success? ; true ; end
       end
 
-      Fail = Struct.new(:code, :message) do
+      Fail = Struct.new(:code, :message, :data) do
         def success? ; false ; end
       end
 

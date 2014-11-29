@@ -6,13 +6,18 @@ module Vx
 
       include Citool::Log
 
-      attr_reader :name, :environment, :chdir, :tasks
+      attr_reader :name, :environment, :chdir, :tasks, :vars
 
       def initialize(options)
         @name        = options["name"]        || "default"
         @environment = options["environment"] || {}
         @chdir       = options["chdir"]
         @tasks       = options["tasks"]       || []
+        @vars        = options["vars"]        || {}
+      end
+
+      def teardown?
+        name == 'teardown'
       end
 
       def invoke
@@ -23,11 +28,26 @@ module Vx
           end
 
           environment.each_pair do |name, value|
-            log_command "export #{name}=#{value}"
+            value = normalize_env_value(value)
+            if value[0] == "!"
+              value = value[1..-1]
+            else
+              log_command "export #{name}=#{value}"
+            end
             ENV[name] = value
           end
 
           invoke_tasks
+        end
+      end
+
+      def normalize_env_value(key_name)
+        key_name.to_s.gsub(/\${(.*)}/) do |re|
+          if $1 == "PWD"
+            Dir.pwd
+          else
+            ENV[$1]
+          end
         end
       end
 
@@ -58,7 +78,7 @@ module Vx
       end
 
       def invoke_action(name, params)
-        a.method("invoke_#{name}").call(params)
+        a.method("invoke_#{name}").call(params, vars: vars)
       end
 
     end

@@ -2,7 +2,7 @@ module Vx
   module Citool
 
     module Actions
-      def invoke_chdir(args)
+      def invoke_chdir(args, options = {})
         args = extract_keys(args)
         log_command "cd #{args[:rest]}"
         dest = File.expand_path(args[:rest])
