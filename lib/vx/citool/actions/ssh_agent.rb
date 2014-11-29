@@ -68,7 +68,7 @@ module Vx
         rescue Timeout::TimeoutError
         end
 
-        re = invoke_shell("ssh-add #{ssh_dir}/id_rsa", silent: true)
+        re = invoke_shell("ssh-add #{ssh_dir}/id_rsa", silent: true, title: "ssh-add ~/.ssh/id_rsa")
         return re unless re.success?
 
         Succ.new(0, "Ssh Agent was successfuly started")

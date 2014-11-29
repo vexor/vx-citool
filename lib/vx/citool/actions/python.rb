@@ -24,13 +24,17 @@ module Vx
           log_command "export PATH=#{PYTHON_VIRTUAL_ENV}/bin:$PATH"
           ENV['PATH'] = "#{ve}/bin:#{ENV['PATH']}"
 
+          p ENV
+
           invoke_shell("virtualenv #{ve}", title: "virtualenv #{PYTHON_VIRTUAL_ENV}")
 
         when 'install'
           invoke_vxvm "python #{args["python"]}"
 
         when 'pip:install'
+          re = nil
           pip_args = args["pip_args"]
+
           if File.exists?("Requirements.txt")
             re = invoke_shell "pip install -r Requirements.txt #{pip_args}"
             return re unless re.success?
@@ -45,6 +49,8 @@ module Vx
             re = invoke_shell "python setup.py install"
             return re unless re.success?
           end
+
+          re || Succ.new(0, "pip tasks was successfuly processed")
 
         when 'django:settings'
 
@@ -76,6 +82,8 @@ module Vx
 
           re = invoke_shell "pip --version"
           return re unless re.success?
+
+          re
         end
       end
     end

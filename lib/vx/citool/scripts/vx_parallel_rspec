@@ -26,5 +26,5 @@ do
 done
 
 echo -e "${GREEN}Parallel running $((${JOB_NUMBER} + 1)) of ${JOBS} ${NORMAL}"
-echo "${YELLOW}$ bundle exec rspec $@ ${files[@]}${NORMAL}"
+echo -e "${YELLOW}$ bundle exec rspec $@ ${files[@]}${NORMAL}"
 exec bundle exec rspec $@ ${files[@]}
