@@ -6,6 +6,7 @@ require File.expand_path("../actions/vxvm",       __FILE__)
 require File.expand_path("../actions/ruby",       __FILE__)
 require File.expand_path("../actions/cache",      __FILE__)
 require File.expand_path("../actions/services",   __FILE__)
+require File.expand_path("../actions/python",     __FILE__)
 
 module Vx
   module Citool
