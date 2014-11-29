@@ -27,6 +27,15 @@ module Vx
         Parser.new(string).extract(*keys)
       end
 
+      def normalize_with_path(value)
+        value.to_s.gsub(/\${([^}]+)}/) do |re|
+          if $1 == "PWD"
+            Dir.pwd
+          else
+            ENV[$1]
+          end
+        end
+      end
 
     end
   end

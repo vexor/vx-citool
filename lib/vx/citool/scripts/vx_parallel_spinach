@@ -26,6 +26,6 @@ do
 done
 
 echo -e "${GREEN}Parallel running $((${JOB_NUMBER} + 1)) of ${JOBS} ${NORMAL}"
-echo "${YELLOW}$ bundle exec spinach $@ ${files[@]}${NORMAL}"
+echo -e "${YELLOW}$ bundle exec spinach $@ ${files[@]}${NORMAL}"
 exec bundle exec spinach $@ ${files[@]}
 

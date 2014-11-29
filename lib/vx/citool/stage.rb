@@ -46,7 +46,7 @@ module Vx
       end
 
       def normalize_env_value(key_name)
-        key_name.to_s.gsub(/\${(.*)}/) do |re|
+        key_name.to_s.gsub(/\${([^}]+)}/) do |re|
           if $1 == "PWD"
             Dir.pwd
           else

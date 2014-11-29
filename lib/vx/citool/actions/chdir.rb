@@ -4,7 +4,8 @@ module Vx
     module Actions
       def invoke_chdir(args, options = {})
         log_command "cd #{args}"
-        dest = File.expand_path(args)
+        dest = normalize_with_path(args)
+        dest = File.expand_path(dest)
         Dir.chdir(dest)
 
         Succ.new(0,  "The command 'cd #{args}' exited with code 0")

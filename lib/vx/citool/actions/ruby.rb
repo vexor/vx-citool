@@ -4,6 +4,12 @@ module Vx
     module Actions
       DEFAULT_BUNDLER_ARGS = "--clean --retry=3 --jobs=4"
 
+      RAILS_SECRETS = '
+test:
+  secret_key_base: "secret"
+'
+
+
       PG_CONFIG = "
 test:
   adapter: postgresql
@@ -47,14 +53,14 @@ test:
           end
 
           def ruby_version
-            if content && content.match(/ruby ['"](.*)['"]/)
+            if content && content.match(/ruby +['"](.*)['"]/)
               $1
             end
           end
 
           def gem?(name)
             name = Regexp.escape(name)
-            content && content.match(/gem ['"]#{name}['"]/)
+            content && content.match(/gem +['"]#{name}['"]/)
           end
 
           def exists?
@@ -172,10 +178,15 @@ test:
           re = invoke_shell("bundle --version")
           return re unless re.success?
 
+          if File.directory?("config") && gemfile.rails?
+            log_notice "create config/secrets.yml"
+            File.open("config/secrets.yml", 'w') {|io| io.write RAILS_SECRETS }
+          end
+
           re
 
         when "bundle:install"
-          invoke_shell "bundle check || bundle install #{args["bundler_args"] || DEFAULT_BUNDLER_ARGS}"
+          invoke_shell "bundle install #{args["bundler_args"] || DEFAULT_BUNDLER_ARGS}"
 
         when "rails:database"
           database.create

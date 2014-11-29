@@ -47,6 +47,7 @@ module Vx
         status = nil
 
         pwd = chdir || Dir.pwd
+
         pwd = File.expand_path(pwd)
         captured_output = ""
 
