@@ -36,7 +36,7 @@ test:
 "
       module Ruby
 
-        Secrets = Struct.new(:owner) do
+        Secrets = Struct.new(:owner, :gemfile) do
 
           FILE = "config/secrets.yml"
 
@@ -52,7 +52,7 @@ test:
           end
 
           def create
-            unless present?
+            if !present? && gemfile.rails? && File.directory?("config")
               owner.log_notice "create config/secrets.yml"
               File.open(FILE, 'w') {|io| io.write "test:\n  secret_key_base: secret\n" }
             end
@@ -172,7 +172,7 @@ test:
       def invoke_ruby(args, options = {})
         gemfile  = Ruby::Gemfile.new
         database = Ruby::Database.new self, gemfile
-        secrets  = Ruby::Secrets.new self
+        secrets  = Ruby::Secrets.new self, gemfile
 
         if args.is_a?(String)
           action = args
@@ -197,20 +197,22 @@ test:
           re = invoke_shell("bundle --version")
           return re unless re.success?
 
-          secrets.create
-
           re
 
         when "bundle:install"
-          invoke_shell "bundle install #{args["bundler_args"] || DEFAULT_BUNDLER_ARGS}"
+
+          #re = invoke_shell "bundle install #{args["bundler_args"] || DEFAULT_BUNDLER_ARGS}"
+          re = invoke_shell "true"
+          return re unless re.success?
+
+          secrets.create
+          re
 
         when "rails:database"
           database.create
 
         when "script"
-          if File.exists?("Rakefile")
-            invoke_shell "bundle exec rake"
-          end
+          invoke_shell "bundle exec rake"
         end
       end
     end
