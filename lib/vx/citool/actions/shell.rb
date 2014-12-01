@@ -26,6 +26,8 @@ module Vx
           chdir   = args["chdir"]
         end
 
+        command = normalize_env_value(command)
+
         if SHELL_IGNORED_COMMANDS.include?(command)
           log_error("The command '#{command}' ignored, if you really need to do it, please contact us")
           return Succ.new(0, "The command '#{command}' exited with unknown status")

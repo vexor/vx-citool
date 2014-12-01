@@ -32,7 +32,7 @@ module Vx
           end
 
           environment.each_pair do |name, value|
-            value = normalize_env_value(value)
+            value = a.normalize_env_value(value)
             if value[0] == "!"
               value = value[1..-1]
             else
@@ -42,16 +42,6 @@ module Vx
           end
 
           invoke_tasks
-        end
-      end
-
-      def normalize_env_value(key_name)
-        key_name.to_s.gsub(/\${([^}]+)}/) do |re|
-          if $1 == "PWD"
-            Dir.pwd
-          else
-            ENV[$1]
-          end
         end
       end
 

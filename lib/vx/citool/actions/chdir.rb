@@ -4,7 +4,7 @@ module Vx
     module Actions
       def invoke_chdir(args, options = {})
         log_command "cd #{args}"
-        dest = normalize_with_path(args)
+        dest = normalize_env_value(args)
         dest = File.expand_path(dest)
         Dir.chdir(dest)
 

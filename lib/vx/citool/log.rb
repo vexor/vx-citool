@@ -12,7 +12,7 @@ module Vx
       end
 
       def log_notice(name)
-        print "#{name}\n".gray
+        print "--> #{name}\n".gray
       end
 
       def log_debug(name)

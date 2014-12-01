@@ -1,0 +1,9 @@
+- name: "install"
+  environment:
+    BUNDLE_GEMFILE: "${PWD}/Gemfile"
+    GEM_HOME:       "~/.rubygems"
+    RAILS_ENV:      test
+    RACK_ENV:       test
+
+  tasks:
+  - shell: echo ${PWD} ${HOME}

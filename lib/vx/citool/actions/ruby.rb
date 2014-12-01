@@ -4,12 +4,6 @@ module Vx
     module Actions
       DEFAULT_BUNDLER_ARGS = "--clean --retry=3 --jobs=4"
 
-      RAILS_SECRETS = '
-test:
-  secret_key_base: "secret"
-'
-
-
       PG_CONFIG = "
 test:
   adapter: postgresql
@@ -41,6 +35,31 @@ test:
         - localhost:27017
 "
       module Ruby
+
+        Secrets = Struct.new(:owner, :gemfile) do
+
+          FILE = "config/secrets.yml"
+
+          def present?
+            if File.exists?(FILE)
+              begin
+                content = File.read(FILE)
+                content.match(/^test\:/)
+              rescue Exception
+              end
+            end
+          end
+
+          def create
+            if !present? && gemfile.rails? && File.directory?("config")
+              owner.log_notice "apply patch to config/secrets.yml"
+              File.open(FILE, 'a') {|io| io.write "\n\ntest:\n  secret_key_base: secret\n" }
+            else
+              owner.log_notice "keep config/secrets.yml"
+            end
+          end
+        end
+
         class Gemfile
           def location
             @location ||= ENV['BUNDLE_GENFILE'] || "#{Dir.pwd}/Gemfile"
@@ -154,6 +173,7 @@ test:
       def invoke_ruby(args, options = {})
         gemfile  = Ruby::Gemfile.new
         database = Ruby::Database.new self, gemfile
+        secrets  = Ruby::Secrets.new self, gemfile
 
         if args.is_a?(String)
           action = args
@@ -178,23 +198,20 @@ test:
           re = invoke_shell("bundle --version")
           return re unless re.success?
 
-          if File.directory?("config") && gemfile.rails?
-            log_notice "create config/secrets.yml"
-            File.open("config/secrets.yml", 'w') {|io| io.write RAILS_SECRETS }
-          end
-
           re
 
         when "bundle:install"
-          invoke_shell "bundle install #{args["bundler_args"] || DEFAULT_BUNDLER_ARGS}"
+          re = invoke_shell "bundle install #{args["bundler_args"] || DEFAULT_BUNDLER_ARGS}"
+          return re unless re.success?
+
+          secrets.create
+          re
 
         when "rails:database"
           database.create
 
         when "script"
-          if File.exists?("Rakefile")
-            invoke_shell "bundle exec rake"
-          end
+          invoke_shell "bundle exec rake"
         end
       end
     end
