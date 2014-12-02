@@ -44,7 +44,7 @@ module Vx
 
         log_command(title) unless hidden
         command = command.gsub(/(\\)?\"/, '\"')
-        cmd = %{/bin/sh -c "#{command}"}
+        cmd = %{env TERM=ansi COLUMNS=63 LINES=21 /bin/sh -c "#{command}"}
 
         pid    = nil
         status = nil
