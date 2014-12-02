@@ -7,3 +7,5 @@
 
   tasks:
   - shell: echo ${PWD} ${HOME}
+  - shell: sh -c "ls -la"
+  - shell: sudo -u dima psql -h localhost -U postgres -d template1 -c "CREATE EXTENSION postgis;"

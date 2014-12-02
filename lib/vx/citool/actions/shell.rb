@@ -43,7 +43,8 @@ module Vx
         end
 
         log_command(title) unless hidden
-        cmd = "/bin/sh -c \"#{command}\""
+        command = command.gsub(/(\\)?\"/, '\"')
+        cmd = %{/bin/sh -c "#{command}"}
 
         pid    = nil
         status = nil
