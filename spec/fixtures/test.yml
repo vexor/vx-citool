@@ -1,4 +1,8 @@
-- name: "install"
+- name: "script"
+  tasks:
+  - shell: "true"
+
+- name: "after_script"
   environment:
     BUNDLE_GEMFILE: "${PWD}/Gemfile"
     GEM_HOME:       "~/.rubygems"
@@ -6,6 +10,6 @@
     RACK_ENV:       test
 
   tasks:
+  - shell: sudo -u dima psql -h localhost -U postgres -d template1 -c "CREATE EXTENSION postgis;"
   - shell: echo ${PWD} ${HOME}
   - shell: sh -c "ls -la"
-  - shell: sudo -u dima psql -h localhost -U postgres -d template1 -c "CREATE EXTENSION postgis;"

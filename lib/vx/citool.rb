@@ -50,7 +50,12 @@ module Vx
             File.open(state_file, 'w') {|io| io.write "script" }
           end
 
-          re = stage.invoke
+          if stage.after_script?
+            stage.invoke
+          else
+            re = stage.invoke
+          end
+
           break unless re.success?
         end
 

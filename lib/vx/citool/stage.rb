@@ -24,6 +24,10 @@ module Vx
         name == 'script'
       end
 
+      def after_script?
+        name == 'after_script'
+      end
+
       def invoke
         log_stage name do
           if chdir
@@ -58,7 +62,9 @@ module Vx
             log_debug "#{k} | fail"
           end
 
-          break unless re.success?
+          if !after_script? && !re.success?
+            break
+          end
         end
         re || a::Succ.new(0, "stage #{name} successfuly completed")
       end
