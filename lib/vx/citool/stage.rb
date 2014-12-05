@@ -24,8 +24,8 @@ module Vx
         name == 'script'
       end
 
-      def after_script?
-        name == 'after_script'
+      def after_success?
+        name == 'after_success'
       end
 
       def invoke
@@ -62,7 +62,7 @@ module Vx
             log_debug "#{k} | fail"
           end
 
-          if !after_script? && !re.success?
+          if !after_success? && !re.success?
             break
           end
         end

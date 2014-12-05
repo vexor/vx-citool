@@ -2,7 +2,7 @@
   tasks:
   - shell: "true"
 
-- name: "after_script"
+- name: "after_success"
   environment:
     BUNDLE_GEMFILE: "${PWD}/Gemfile"
     GEM_HOME:       "~/.rubygems"
@@ -12,4 +12,5 @@
   tasks:
   - shell: sudo -u dima psql -h localhost -U postgres -d template1 -c "CREATE EXTENSION postgis;"
   - shell: echo ${PWD} ${HOME}
+  - shell: "false"
   - shell: sh -c "ls -la"
