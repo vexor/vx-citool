@@ -7,6 +7,7 @@ require File.expand_path("../actions/ruby",       __FILE__)
 require File.expand_path("../actions/cache",      __FILE__)
 require File.expand_path("../actions/services",   __FILE__)
 require File.expand_path("../actions/python",     __FILE__)
+require File.expand_path("../actions/scala",      __FILE__)
 
 module Vx
   module Citool
@@ -18,6 +19,15 @@ module Vx
 
       Fail = Struct.new(:code, :message, :data) do
         def success? ; false ; end
+      end
+
+      NoTests = Struct.new(:orig_message) do
+        def success? ; false ; end
+
+        def code  ; 1 ; end
+        def message
+          "[NO TESTS] #{orig_message}"
+        end
       end
 
       extend self
