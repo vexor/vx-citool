@@ -43,11 +43,17 @@ module Vx
           command  = found
         end
 
+        if command =~ /^nohup (.*)$/
+          command = $1
+          options[:detach] = true
+        end
+
         log_command(title) unless hidden
-        #command = command.gsub(/(\\)?\"/, '\"')
         cmd = %{/bin/sh -c #{Shellwords.escape command}}
 
         pid    = nil
+        r      = nil
+        w      = nil
         status = nil
 
         pwd = chdir || Dir.pwd
@@ -56,33 +62,54 @@ module Vx
         captured_output = ""
 
         Dir.chdir(pwd) do
-          ::PTY.spawn(cmd) do |r, w, p|
-            begin
-              r.sync = true
-              w.close
-
-              loop do
-                rs, _, _ = IO.select([r], nil, nil, 0.1)
-
-                if rs
-                  break if rs[0].eof?
-                  chunk = rs[0].readpartial(8192)
-                  if silent
-                    captured_output << chunk
-                  else
-                    print chunk
-                  end
-                end
+          if options[:detach]
+            pid = ::Process.spawn(cmd, out: "nohup.log", err: "nohup.log")
+            Citool.teardown do
+              log_debug "kill '#{cmd}', pid #{pid}"
+              begin
+                Process.kill("KILL", pid)
+                Process.wait(pid)
+              rescue Exception
               end
-            rescue Errno::EIO
             end
-
-            pid = p
-            _, status = ::Process.wait2(pid)
+          else
+            r, w, pid = ::PTY.spawn(cmd)
           end
         end
 
-        exit_code = status.exitstatus
+        unless options[:detach]
+          begin
+            r.sync = true
+            w.close
+
+            loop do
+              rs, _, _ = IO.select([r], nil, nil, 0.1)
+
+              if rs
+                break if rs[0].eof?
+                chunk = rs[0].readpartial(8192)
+                if silent
+                  captured_output << chunk
+                else
+                  print chunk
+                end
+              end
+            end
+          rescue Errno::EIO
+          end
+          _, status = ::Process.wait2(pid)
+        end
+
+        compute_shell_exist_code status, command, silent, captured_output, options
+      end
+
+      def compute_shell_exist_code(status, command, silent, captured_output, options)
+        exit_code =
+          if options[:detach]
+            0
+          else
+            status.exitstatus
+          end
 
         if exit_code != 0 && silent
           print captured_output
@@ -100,6 +127,7 @@ module Vx
         else
           Fail.new(exit_code, message, captured_output)
         end
+
       end
 
     end

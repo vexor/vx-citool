@@ -2,7 +2,7 @@
   tasks:
   - shell: "true"
 
-- name: "after_success"
+- name: "script"
   environment:
     BUNDLE_GEMFILE: "${PWD}/Gemfile"
     GEM_HOME:       "~/.rubygems"
@@ -10,5 +10,5 @@
     RACK_ENV:       test
 
   tasks:
-  - shell: sh -c "echo 1 ; sleep 1 ; echo 1 > log.txt" &
-  - shell: sleep 2
+  - shell: nohup foo bar
+  - shell: sleep 1
