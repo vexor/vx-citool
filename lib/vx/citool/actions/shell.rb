@@ -1,4 +1,5 @@
 require 'pty'
+require 'shellwords'
 
 module Vx
   module Citool
@@ -43,8 +44,8 @@ module Vx
         end
 
         log_command(title) unless hidden
-        command = command.gsub(/(\\)?\"/, '\"')
-        cmd = %{/bin/sh -c "#{command}"}
+        #command = command.gsub(/(\\)?\"/, '\"')
+        cmd = %{/bin/sh -c #{Shellwords.escape command}}
 
         pid    = nil
         status = nil

@@ -10,7 +10,5 @@
     RACK_ENV:       test
 
   tasks:
-  - shell: sudo -u dima psql -h localhost -U postgres -d template1 -c "CREATE EXTENSION postgis;"
-  - shell: echo ${PWD} ${HOME}
-  - shell: "false"
-  - shell: sh -c "ls -la"
+  - shell: sh -c "echo 1 ; sleep 1 ; echo 1 > log.txt" &
+  - shell: sleep 2
