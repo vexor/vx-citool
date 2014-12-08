@@ -185,7 +185,21 @@ test:
         case action
 
         when "install"
-          version = gemfile.ruby_version || args["ruby"]
+          version =
+            if r = gemfile.ruby_version
+              if args['ruby']
+                if args['ruby'].to_s.match(/^#{Regexp.escape r}/)
+                  args['ruby']
+                else
+                  log_notice "Force using the ruby version '#{r}' instread '#{args['ruby']}', specified in the Gemfile"
+                  r
+                end
+              else
+                r
+              end
+            else
+              args["ruby"]
+            end
           invoke_vxvm("ruby #{version}")
 
         when 'announce'
