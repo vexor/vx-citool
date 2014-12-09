@@ -24,8 +24,6 @@ module Vx
           log_command "export PATH=#{PYTHON_VIRTUAL_ENV}/bin:$PATH"
           ENV['PATH'] = "#{ve}/bin:#{ENV['PATH']}"
 
-          p ENV
-
           invoke_shell("virtualenv #{ve}", title: "virtualenv #{PYTHON_VIRTUAL_ENV}")
 
         when 'install'
