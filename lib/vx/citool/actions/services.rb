@@ -4,6 +4,7 @@ module Vx
     module Actions
       def invoke_services(args, options = {})
         re = nil
+
         Array(args).each do |srv|
           re = invoke_shell("sudo service #{srv} start")
           return re unless re.success?

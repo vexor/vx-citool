@@ -52,7 +52,7 @@ module Vx
       def invoke_tasks
         re = nil
         tasks.each do |task|
-          k,v = task.to_a.flatten
+          k,v = Array(task).first
           log_debug "#{k} | #{v.inspect}"
           re = invoke_action(k, v)
 
