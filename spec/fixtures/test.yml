@@ -12,7 +12,4 @@
   tasks:
   - shell: nohup foo bar
   - shell: sleep 1
-  - services:
-    - a
-    - b
-    - c
+  - shell_retry: ${PWD}/test.rb

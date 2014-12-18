@@ -15,16 +15,36 @@ module Vx
         'gem update bundler'
       ]
 
+      def invoke_shell_retry(args, options = {})
+        attempts = 0
+        re       = nil
+
+        while attempts < 3
+          attempts += 1
+          re = invoke_shell(args, options)
+          if re.success?
+            break
+          else
+            log ""
+            log_error re.message + ". Attempt #{attempts} of 3"
+            log ""
+            sleep 5
+          end
+        end
+
+        re
+      end
+
       def invoke_shell(args, options = {})
 
         command = nil
         chdir   = nil
 
-        if args.is_a?(String)
-          command = args
-        else
+        if args.is_a?(Hash)
           command = args["command"]
           chdir   = args["chdir"]
+        else
+          command = args.to_s
         end
 
         command = normalize_env_value(command)

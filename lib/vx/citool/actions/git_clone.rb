@@ -15,7 +15,7 @@ module Vx
           re = invoke_shell("rm -rf #{args["dest"]}", silent: true, hidden: true)
         end
 
-        re = invoke_shell(cmd)
+        re = invoke_shell_retry(cmd)
         return re unless re.success?
 
         if pr = args["pr"]
