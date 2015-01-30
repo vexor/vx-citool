@@ -1,8 +1,9 @@
-require 'fileutils'
+require 'rubygems'
+require 'bundler'
+Bundler.require
+require 'rspec/core/rake_task'
 
-task :default do
-  FileUtils.rm_rf "tmp/.ssh"
-  FileUtils.rm_rf "tmp/.casher"
-  FileUtils.rm_rf "tmp/vexor"
-  exec %{ sh -c "cat spec/fixtures/simple.yml | HOME=$(pwd)/tmp bin/vx-citool -" }
-end
+RSpec::Core::RakeTask.new(:spec)
+
+desc "Run rspec"
+task default: [:spec]

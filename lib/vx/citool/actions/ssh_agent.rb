@@ -7,26 +7,31 @@ module Vx
     module Actions
 
       def invoke_ssh_agent(args, options = {} )
-        ssh_dir    = File.expand_path("~/.ssh")
-        ssh_key    = args["key"]
+        ssh_dir   = options[:ssh_dir] || File.expand_path("~/.ssh")
 
-        if ssh_key[0] == "$"
-          ssh_key = ssh_key.sub("$", '')
-          ssh_key = options[:vars][ssh_key]
-        end
+        ssh_keys  = args["deploy_key"]
+        ssh_keys  = [ssh_keys] unless ssh_keys.is_a?(Array)
+        file_name = ->(index){ "#{ssh_dir}/id#{index}_rsa"}
 
         agent_sock = "#{ssh_dir}/agent.sock"
 
         log_debug "create ssh dir"
         FileUtils.mkdir_p ssh_dir, mode: 0700
 
-        log_debug "create ssh key file"
-        File.open("#{ssh_dir}/id_rsa", 'w') do |io|
-          io.write ssh_key
+        log_debug "create ssh key files"
+
+        ssh_keys.each_with_index do |key, index|
+          file = file_name[index]
+
+          File.open(file, 'w') do |io|
+            io.write key
+          end
+
+          FileUtils.chmod 0600, file
         end
-        FileUtils.chmod 0600, "#{ssh_dir}/id_rsa"
 
         log_debug "write ssh_config file"
+
         File.open("#{ssh_dir}/config", 'w') do |io|
           io.write "Host *\n"
           io.write "  ForwardAgent yes\n"
@@ -68,12 +73,15 @@ module Vx
         rescue Timeout::TimeoutError
         end
 
-        re = invoke_shell("ssh-add #{ssh_dir}/id_rsa", silent: true, title: "ssh-add ~/.ssh/id_rsa")
-        return re unless re.success?
+        re = ssh_keys.map.with_index do |_, index|
+          file = file_name[index]
+          invoke_shell("ssh-add #{file}", silent: true, title: "~/.ssh/id#{index}_rsa")
+        end
 
-        Succ.new(0, "Ssh Agent was successfuly started")
+        return re unless re.all?(&:success?)
+
+        Succ.new(0, "Ssh Agent was successfuly started", pid: pid)
       end
     end
-
   end
 end
