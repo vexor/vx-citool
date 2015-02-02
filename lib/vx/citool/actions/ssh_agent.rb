@@ -8,9 +8,17 @@ module Vx
 
       def invoke_ssh_agent(args, options = {} )
         ssh_dir   = options[:ssh_dir] || File.expand_path("~/.ssh")
+        keys      = args["key"]
 
-        ssh_keys  = args["deploy_key"]
+        ssh_keys =
+          if keys.is_a?(String) && keys.match(/\A\$(.+)\Z/)
+            options[:vars][$1]
+          else
+            keys
+          end
+
         ssh_keys  = [ssh_keys] unless ssh_keys.is_a?(Array)
+
         file_name = ->(index){ "#{ssh_dir}/id#{index}_rsa"}
 
         agent_sock = "#{ssh_dir}/agent.sock"

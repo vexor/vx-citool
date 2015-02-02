@@ -1,7 +1,7 @@
 - name: "clone"
   tasks:
   - ssh_agent:
-      deploy_key:
+      key:
       - |
         -----BEGIN RSA PRIVATE KEY-----
         MIIEpAIBAAKCAQEApMkam+mhwCdCQdqtu7U9p5VRFmkrbi9HaA3vagphMvyryWqx

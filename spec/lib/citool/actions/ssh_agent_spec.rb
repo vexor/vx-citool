@@ -7,6 +7,14 @@ describe Vx::Citool::Actions do
     subject.data[:pid]
   end
 
+  let(:args) do
+    file["tasks"][0]["ssh_agent"]
+  end
+
+  let(:vars) do
+    file["vars"]
+  end
+
   after do
     puts "Shutting down ssh-agent with pid #{pid}..."
     Process.kill(:KILL, pid)
@@ -15,14 +23,14 @@ describe Vx::Citool::Actions do
 
   subject do
     described_class.extend described_class
-    described_class.invoke_ssh_agent(args, ssh_dir: ssh_dir)
+    described_class.invoke_ssh_agent(args, ssh_dir: ssh_dir, vars: vars)
   end
 
   %w(string array).each do |kind|
     context "#{kind}" do
-      let!(:args) do
+      let!(:file) do
         path = File.expand_path "spec/fixtures/keys_#{kind}.yml"
-        YAML.load_file(path)[0]["tasks"][0]["ssh_agent"]
+        YAML.load_file(path)[0]
       end
 
       it "creates and adds ssh keys" do
