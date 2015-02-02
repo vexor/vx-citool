@@ -28,7 +28,6 @@
       8gXGSftEiTcLat0a0P6veacgPKuhAHe1K7h84+R0rE/cv1QTBpW38RQgabLs+exy
       jyF5R1NHI/LXsDBNaiR05srXdiSZumL0awX7riC4DzIk6ZZYRdbnbQ==
       -----END RSA PRIVATE KEY-----
-
   tasks:
   - ssh_agent:
       key: $ssh_key
