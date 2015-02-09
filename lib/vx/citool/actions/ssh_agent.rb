@@ -19,7 +19,7 @@ module Vx
 
         ssh_keys  = [ssh_keys] unless ssh_keys.is_a?(Array)
 
-        file_name = ->(index){ "#{ssh_dir}/id#{index}_rsa"}
+        file_name = ->(index){ "#{ssh_dir}/id_rsa#{index + 1}"}
 
         agent_sock = "#{ssh_dir}/agent.sock"
 
@@ -83,12 +83,17 @@ module Vx
 
         re = ssh_keys.map.with_index do |_, index|
           file = file_name[index]
-          invoke_shell("ssh-add #{file}", silent: true, title: "~/.ssh/id#{index}_rsa")
+          invoke_shell("ssh-add #{file}", silent: true, title: "~/.ssh/id_rsa#{index + 1}")
         end
 
-        return re unless re.all?(&:success?)
+        failed = re.reject(&:success?)
 
-        Succ.new(0, "Ssh Agent was successfuly started", pid: pid)
+        if failed.any?
+          f = failed.first
+          Fail.new(f.code, f.message, pid: pid)
+        else
+          Succ.new(0, "Ssh Agent was successfuly started", pid: pid)
+        end
       end
     end
   end
