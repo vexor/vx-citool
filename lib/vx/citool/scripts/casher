@@ -2,6 +2,7 @@
 require 'shellwords'
 require 'fileutils'
 require 'yaml'
+require 'open-uri'
 
 class Casher
   include FileUtils
@@ -21,9 +22,24 @@ class Casher
     send(command, *arguments)
   end
 
+  def fetch_body(url)
+    begin
+      open(url) {|io| io.gets }
+    rescue Exception => e
+      $stderr.puts "#{e.class} - #{e.message}"
+    end
+  end
+
   def fetch(*urls)
     puts "attempting to download cache archive"
-    if urls.any? { |url| system "curl -m 30 -L --tcp-nodelay %p -o %p -f -s >#{@casher_dir}/fetch.log 2>#{@casher_dir}/fetch.err.log" % [url, @fetch_tar] }
+    res =  urls.any? do |url|
+      new_url = fetch_body(url)
+      if new_url
+        system "curl -m 30 -L --tcp-nodelay -f -s %p -o %p >#{@casher_dir}/fetch.log 2>#{@casher_dir}/fetch.err.log" % [new_url, @fetch_tar]
+      end
+    end
+
+    if res
       puts "found cache"
       puts "extracting checksums"
       tar(:x, @fetch_tar, @md5_file) { puts "checksums not yet calculated, skipping" }
@@ -53,8 +69,13 @@ class Casher
       store_md5
       tar(:c, @push_tar, @md5_file, *@mtimes.keys)
       puts "uploading archive"
-      unless system "curl -m 60 -T %p %p -s -S  >#{@casher_dir}/push.log 2>#{@casher_dir}/push.err.log" % [@push_tar, url]
-        puts "failed to upload cache", File.read("#{@casher_dir}/push.err.log"), File.read("#{@casher_dir}/push.log")
+      new_url = fetch_body(url)
+      if new_url
+        unless system "curl -s -S -m 60 -T %p %p >#{@casher_dir}/push.log 2>#{@casher_dir}/push.err.log" % [@push_tar, new_url]
+          puts "failed to upload cache", File.read("#{@casher_dir}/push.err.log"), File.read("#{@casher_dir}/push.log")
+        end
+      else
+        puts "failed to retrieve cache url"
       end
     else
       puts "nothing changed, not updating cache"
