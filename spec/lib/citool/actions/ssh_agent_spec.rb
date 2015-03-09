@@ -38,8 +38,9 @@ describe Vx::Citool::Actions do
           s = subject
 
           n = kind == "array" ? 3 : 1
-          n.times do |i|
-            name = "id_rsa#{i + 1}"
+          n.times do |idx|
+            i = ( idx == 0 ? '' : (idx + 1) )
+            name = "id_rsa#{i}"
             expect(File).to exist(File.expand_path ssh_dir, name)
             expect(File).to exist(File.expand_path ssh_dir, "#{name}.pub")
             expect(`ssh-add -l`).to match %r[#{name}]
