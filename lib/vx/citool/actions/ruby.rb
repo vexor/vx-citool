@@ -62,7 +62,7 @@ test:
 
         class Gemfile
           def location
-            @location ||= ENV['BUNDLE_GENFILE'] || "#{Dir.pwd}/Gemfile"
+            @location ||= ENV['BUNDLE_GEMFILE'] || "#{Dir.pwd}/Gemfile"
           end
 
           def content
