@@ -38,10 +38,13 @@ module Vx
           environment.each_pair do |name, value|
             value = a.normalize_env_value(value)
             if value[0] == "!"
-              value = value[1..-1]
+              value     = value[1..-1]
+              log_value = secure_env_value(value)
             else
-              log_command "export #{name}=#{value}"
+              log_value = value
             end
+
+            log_command "export #{name}=#{log_value}"
             ENV[name] = value
           end
 
@@ -79,6 +82,14 @@ module Vx
 
       def invoke_action(name, params)
         a.method("invoke_#{name}").call(params, vars: vars)
+      end
+
+      private
+
+      def secure_env_value(value)
+        value.each_char.reduce("") do |memo, ch|
+          memo << ch == " " ? ch : "*"
+        end
       end
 
     end
