@@ -87,9 +87,7 @@ module Vx
       private
 
       def secure_env_value(value)
-        value.each_char.reduce("") do |memo, ch|
-          memo << ch == " " ? ch : "*"
-        end
+        value.gsub(/[^\s]/, '*')
       end
 
     end
