@@ -23,6 +23,10 @@ module Vx
       stage.invoke
     end
 
+    def run_teardown
+      @@teardown.map(&:call)
+    end
+
     def process(content)
       yaml = YAML.load(content)
       state_file = File.expand_path("~/.ci_state")
@@ -65,7 +69,7 @@ module Vx
           teardown_stage.invoke
         end
       ensure
-        @@teardown.map(&:call)
+        run_teardown
       end
 
       re

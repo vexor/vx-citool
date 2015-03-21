@@ -200,7 +200,14 @@ test:
             else
               args["ruby"]
             end
-          invoke_vxvm("ruby #{version}")
+          re = invoke_vxvm("ruby #{version}")
+          return re unless re.success?
+
+          if ENV['GEM_HOME']
+            re = invoke_shell("export PATH=$GEM_HOME/bin:$PATH")
+          end
+
+          re
 
         when 'announce'
           re = invoke_shell("ruby --version")

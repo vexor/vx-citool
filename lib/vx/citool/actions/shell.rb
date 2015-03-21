@@ -1,5 +1,6 @@
 require 'pty'
 require 'shellwords'
+require 'tempfile'
 
 module Vx
   module Citool
@@ -68,6 +69,17 @@ module Vx
           options[:detach] = true
         end
 
+        if command =~ /^export (.+)=(.*)$/
+          title   = command
+          file    = "#{Dir.tmpdir}/.captured_#{$1}"
+          command = "echo #{$2} > #{file}"
+          options[:capture_env] = [$1, file]
+
+          Citool.teardown do
+            File.readable?(file) && File.unlink(file)
+          end
+        end
+
         log_command(title) unless hidden
         cmd = %{/bin/sh -c #{Shellwords.escape command}}
 
@@ -118,6 +130,14 @@ module Vx
           rescue Errno::EIO
           end
           _, status = ::Process.wait2(pid)
+        end
+
+        if options[:capture_env]
+          env, file = options[:capture_env]
+          if File.readable?(file)
+            value = File.read(file)
+            ENV[env] = value.strip
+          end
         end
 
         compute_shell_exist_code status, command, silent, captured_output, options
