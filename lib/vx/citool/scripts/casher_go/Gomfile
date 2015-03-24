@@ -1,0 +1,2 @@
+gom "github.com/codegangsta/cli"
+gom "code.google.com/p/gcfg"
