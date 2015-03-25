@@ -27,23 +27,25 @@ type Config struct {
 	Mtimes    Mtimes
 }
 
-func (cfg *Config) build(c *cli.Context) (err error) {
-	err = gcfg.ReadFileInto(cfg, c.String("config"))
+var (
+	cfg    Config
+	mtimes Mtimes
+)
+
+func (cfg *Config) build(c *cli.Context) {
+	err := gcfg.ReadFileInto(cfg, c.String("config"))
 	if err != nil {
-		return
+		fmt.Println("Bad config:", err)
+		os.Exit(1)
 	}
 	cfg.CasherDir = c.String("casher_dir")
 	cfg.MtimeFile = fmt.Sprintf("%s/%s", cfg.CasherDir, cfg.Files.MtimeFile)
 	cfg.Md5File = fmt.Sprintf("%s/%s", cfg.CasherDir, cfg.Files.Md5File)
 	cfg.FetchTar = fmt.Sprintf("%s/%s", cfg.CasherDir, cfg.Files.FetchTar)
 	cfg.PushTar = fmt.Sprintf("%s/%s", cfg.CasherDir, cfg.Files.PushTar)
-	// cfg.Mtimes = ???
-	return
 }
 
 func main() {
-	// var cfg Config
-
 	app := cli.NewApp()
 	app.Name = "casher"
 	app.Usage = "TODO: WRITEME"
@@ -63,13 +65,25 @@ func main() {
 		},
 	}
 
+	app.Before = func(c *cli.Context) (err error) {
+		fmt.Println("====>>>>")
+
+		cfg.build(c)
+		err = os.MkdirAll(cfg.CasherDir, 0755)
+		if err != nil {
+			fmt.Println(err.Error())
+			return
+		}
+		return
+	}
+
 	app.Commands = []cli.Command{
 		{
 			Name:    "add",
 			Aliases: []string{"a"},
 			Usage:   "TODO: WRITEME",
 			Action: func(c *cli.Context) {
-				println("adding")
+				fmt.Println("adding")
 			},
 		},
 		{
@@ -77,7 +91,7 @@ func main() {
 			Aliases: []string{"f"},
 			Usage:   "TODO: WRITEME",
 			Action: func(c *cli.Context) {
-				println("fetching")
+				fmt.Println("fetching")
 			},
 		},
 		{
@@ -85,24 +99,10 @@ func main() {
 			Aliases: []string{"p"},
 			Usage:   "TODO: WRITEME",
 			Action: func(c *cli.Context) {
-				println("pushing")
+				fmt.Println("pushing")
 			},
 		},
 	}
-
-	// app.Action = func(c *cli.Context) {
-	// 	println("====>>>>")
-	// 	err := cfg.build(c)
-	// 	if err != nil {
-	// 		println("Bad config:", err.Error())
-	// 		os.Exit(1)
-	// 	}
-	// 	err = os.MkdirAll(cfg.CasherDir, 0755)
-	// 	if err != nil {
-	// 		println(err.Error())
-	// 		os.Exit(1)
-	// 	}
-	// }
 
 	app.Run(os.Args)
 }
