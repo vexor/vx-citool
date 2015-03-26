@@ -1,2 +1,3 @@
 gom "github.com/codegangsta/cli"
 gom "code.google.com/p/gcfg"
+gom "gopkg.in/yaml.v2"
