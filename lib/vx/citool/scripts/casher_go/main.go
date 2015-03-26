@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"github.com/codegangsta/cli"
 	"os"
+	"path/filepath"
+	"time"
 )
 
-type Mtimes struct {
-	// TODO: implement
-}
+type Mtimes map[string]int64
 
 type Config struct {
 	Files struct {
@@ -24,7 +24,6 @@ type Config struct {
 	Md5File   string
 	FetchTar  string
 	PushTar   string
-	Mtimes    Mtimes
 }
 
 var (
@@ -66,14 +65,13 @@ func main() {
 	}
 
 	app.Before = func(c *cli.Context) (err error) {
-		fmt.Println("====>>>>")
-
 		cfg.build(c)
 		err = os.MkdirAll(cfg.CasherDir, 0755)
 		if err != nil {
 			fmt.Println(err.Error())
 			return
 		}
+		mtimes = make(Mtimes)
 		return
 	}
 
@@ -81,9 +79,18 @@ func main() {
 		{
 			Name:    "add",
 			Aliases: []string{"a"},
-			Usage:   "TODO: WRITEME",
+			Usage:   "adds paths to cache",
 			Action: func(c *cli.Context) {
-				fmt.Println("adding")
+				paths := c.Args()
+				for _, path := range paths {
+					path, _ = filepath.Abs(path)
+					fmt.Printf("adding %s to cache\n", path)
+					os.MkdirAll(path, 0755)
+					// tar goes here
+					mtimes[path] = time.Now().Unix()
+				}
+				fmt.Println(mtimes)
+				// mtimes marshlling to yaml goes here
 			},
 		},
 		{
