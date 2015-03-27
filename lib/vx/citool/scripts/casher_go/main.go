@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"time"
 )
@@ -40,9 +41,18 @@ func check(e error) {
 	}
 }
 
-func tar(flag string, tarFileName string, paths ...string) (err error) {
-	// TODO: implement
-	return
+func tar(errCallback func(), flag string, tarFileName string, args ...string) {
+	flags := fmt.Sprintf("-Pz%sf", flag)
+	args = append([]string{flags, tarFileName}, args...)
+	cmd := exec.Command("tar", args...)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		if errCallback != nil {
+			errCallback()
+		} else {
+			log.Printf("FAILED: %s => %s", cmd.Args, out)
+		}
+	}
 }
 
 func (cfg *Config) build(c *cli.Context) {
@@ -50,12 +60,56 @@ func (cfg *Config) build(c *cli.Context) {
 	check(err)
 
 	cfg.CasherDir, err = filepath.Abs(c.String("casher_dir"))
-	// TODO: решить на filepath целиком
-	cfg.MtimeFile, err = filepath.Abs(fmt.Sprintf("%s/%s", cfg.CasherDir, cfg.Files.MtimeFile))
-	cfg.Md5File, err = filepath.Abs(fmt.Sprintf("%s/%s", cfg.CasherDir, cfg.Files.Md5File))
-	cfg.FetchTar, err = filepath.Abs(fmt.Sprintf("%s/%s", cfg.CasherDir, cfg.Files.FetchTar))
-	cfg.PushTar, err = filepath.Abs(fmt.Sprintf("%s/%s", cfg.CasherDir, cfg.Files.PushTar))
+
+	cfg.MtimeFile, err = filepath.Abs(filepath.Join(cfg.CasherDir, cfg.Files.MtimeFile))
+	cfg.Md5File, err = filepath.Abs(filepath.Join(cfg.CasherDir, cfg.Files.Md5File))
+	cfg.FetchTar, err = filepath.Abs(filepath.Join(cfg.CasherDir, cfg.Files.FetchTar))
+	cfg.PushTar, err = filepath.Abs(filepath.Join(cfg.CasherDir, cfg.Files.PushTar))
+
 	check(err)
+}
+
+func doAdd(c *cli.Context) {
+	log.Println("adding: started")
+
+	paths := c.Args()
+
+	for _, path := range paths {
+		path, err := filepath.Abs(path)
+		if err != nil {
+			log.Println("Error", path, "is impossible on this system")
+			continue
+		}
+
+		log.Printf("adding %s to cache\n", path)
+		mtimes[path] = time.Now().Unix()
+		os.MkdirAll(path, 0755)
+
+		warner := func() {
+			log.Println(path, "is not yet cached")
+		}
+		tar(warner, "x", cfg.FetchTar, path)
+	}
+
+	yml, _ := yaml.Marshal(mtimes)
+
+	err := ioutil.WriteFile(cfg.MtimeFile, yml, 0644)
+	check(err)
+
+	log.Println("adding: finished")
+}
+
+func prepareApp(c *cli.Context) (err error) {
+	cfg.build(c)
+	err = os.MkdirAll(cfg.CasherDir, 0755)
+	check(err)
+
+	yml, err := ioutil.ReadFile(cfg.MtimeFile)
+	check(err)
+
+	err = yaml.Unmarshal(yml, &mtimes)
+	check(err)
+	return
 }
 
 func main() {
@@ -78,49 +132,14 @@ func main() {
 		},
 	}
 
-	app.Before = func(c *cli.Context) (err error) {
-		// TODO: extract function
-		cfg.build(c)
-		err = os.MkdirAll(cfg.CasherDir, 0755)
-		check(err)
-
-		yml, err := ioutil.ReadFile(cfg.MtimeFile)
-		check(err)
-
-		err = yaml.Unmarshal(yml, &mtimes)
-		check(err)
-		return
-	}
+	app.Before = prepareApp
 
 	app.Commands = []cli.Command{
 		{
 			Name:    "add",
 			Aliases: []string{"a"},
 			Usage:   "adds paths to cache",
-			Action: func(c *cli.Context) {
-				// TODO: extract function
-				log.Println("adding: started")
-
-				paths := c.Args()
-
-				for _, path := range paths {
-					path, _ = filepath.Abs(path)
-					log.Printf("adding %s to cache\n", path)
-					os.MkdirAll(path, 0755)
-
-					err := tar("x", cfg.FetchTar, path)
-					if err != nil {
-						log.Println(path, "is not yet cached")
-					}
-
-					mtimes[path] = time.Now().Unix()
-				}
-				yml, _ := yaml.Marshal(mtimes)
-
-				err := ioutil.WriteFile(cfg.MtimeFile, yml, 0644)
-				check(err)
-				log.Println("adding: finished")
-			},
+			Action:  doAdd,
 		},
 		{
 			Name:    "fetch",
