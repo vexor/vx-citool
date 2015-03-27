@@ -10,11 +10,25 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"sync"
 	"time"
 )
 
+// TODO: extract into file
 type Mtimes map[string]int64
 
+func (mtimes *Mtimes) restore() {
+	*mtimes = make(Mtimes)
+	yml, _ := ioutil.ReadFile(cfg.MtimeFile)
+	yaml.Unmarshal(yml, mtimes)
+}
+
+func (mtimes Mtimes) store() {
+	yml, _ := yaml.Marshal(mtimes)
+	ioutil.WriteFile(cfg.MtimeFile, yml, 0644)
+}
+
+// TODO: extract into file
 type Config struct {
 	Files struct {
 		MtimeFile string
@@ -35,26 +49,7 @@ var (
 	mtimes Mtimes
 )
 
-func check(e error) {
-	if e != nil {
-		log.Fatal(e)
-	}
-}
-
-func tar(errCallback func(), flag string, tarFileName string, args ...string) {
-	flags := fmt.Sprintf("-Pz%sf", flag)
-	args = append([]string{flags, tarFileName}, args...)
-	cmd := exec.Command("tar", args...)
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		if errCallback != nil {
-			errCallback()
-		} else {
-			log.Printf("FAILED: %s => %s", cmd.Args, out)
-		}
-	}
-}
-
+// Builds the global configuration structure
 func (cfg *Config) build(c *cli.Context) {
 	err := gcfg.ReadFileInto(cfg, c.String("config"))
 	check(err)
@@ -69,9 +64,42 @@ func (cfg *Config) build(c *cli.Context) {
 	check(err)
 }
 
+// TODO: extract into file
+func check(e error) {
+	if e != nil {
+		log.Fatal(e)
+	}
+}
+
+// External command execution wrapper for tar WITH OPTIONAL CALLBACK TO HANDLE ERROR
+func tar(errCallback func(), flag string, tarFileName string, args ...string) {
+	flags := fmt.Sprintf("-Pz%sf", flag)
+	args = append([]string{flags, tarFileName}, args...)
+	cmd := exec.Command("tar", args...)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		if errCallback != nil {
+			errCallback()
+		} else {
+			log.Printf("FAILED: %s => %s", cmd.Args, out)
+		}
+	}
+}
+
+// Sets up application's configuration
+func prepareApp(c *cli.Context) (err error) {
+	cfg.build(c)
+	err = os.MkdirAll(cfg.CasherDir, 0755)
+	check(err)
+	mtimes.restore()
+	return
+}
+
+// Implements 'add' subcommand
 func doAdd(c *cli.Context) {
 	log.Println("adding: started")
 
+	var wg sync.WaitGroup
 	paths := c.Args()
 
 	for _, path := range paths {
@@ -82,34 +110,23 @@ func doAdd(c *cli.Context) {
 		}
 
 		log.Printf("adding %s to cache\n", path)
-		mtimes[path] = time.Now().Unix()
 		os.MkdirAll(path, 0755)
+		mtimes[path] = time.Now().Unix()
 
-		warner := func() {
-			log.Println(path, "is not yet cached")
-		}
-		tar(warner, "x", cfg.FetchTar, path)
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			warner := func() {
+				log.Println(path, "is not yet cached")
+			}
+			tar(warner, "x", cfg.FetchTar, path)
+		}()
 	}
+	wg.Wait()
 
-	yml, _ := yaml.Marshal(mtimes)
-
-	err := ioutil.WriteFile(cfg.MtimeFile, yml, 0644)
-	check(err)
+	mtimes.store()
 
 	log.Println("adding: finished")
-}
-
-func prepareApp(c *cli.Context) (err error) {
-	cfg.build(c)
-	err = os.MkdirAll(cfg.CasherDir, 0755)
-	check(err)
-
-	yml, err := ioutil.ReadFile(cfg.MtimeFile)
-	check(err)
-
-	err = yaml.Unmarshal(yml, &mtimes)
-	check(err)
-	return
 }
 
 func main() {
