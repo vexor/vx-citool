@@ -54,14 +54,12 @@ func (cfg *Config) build(c *cli.Context) {
 	err := gcfg.ReadFileInto(cfg, c.String("config"))
 	check(err)
 
-	cfg.CasherDir, err = filepath.Abs(c.String("casher_dir"))
+	cfg.CasherDir, _ = filepath.Abs(c.String("casher_dir"))
 
-	cfg.MtimeFile, err = filepath.Abs(filepath.Join(cfg.CasherDir, cfg.Files.MtimeFile))
-	cfg.Md5File, err = filepath.Abs(filepath.Join(cfg.CasherDir, cfg.Files.Md5File))
-	cfg.FetchTar, err = filepath.Abs(filepath.Join(cfg.CasherDir, cfg.Files.FetchTar))
-	cfg.PushTar, err = filepath.Abs(filepath.Join(cfg.CasherDir, cfg.Files.PushTar))
-
-	check(err)
+	cfg.MtimeFile, _ = filepath.Abs(filepath.Join(cfg.CasherDir, cfg.Files.MtimeFile))
+	cfg.Md5File, _ = filepath.Abs(filepath.Join(cfg.CasherDir, cfg.Files.Md5File))
+	cfg.FetchTar, _ = filepath.Abs(filepath.Join(cfg.CasherDir, cfg.Files.FetchTar))
+	cfg.PushTar, _ = filepath.Abs(filepath.Join(cfg.CasherDir, cfg.Files.PushTar))
 }
 
 // TODO: extract into file
@@ -144,7 +142,7 @@ func main() {
 		cli.StringFlag{
 			Name:   "casher_dir, d",
 			Usage:  "casher working directory",
-			Value:  fmt.Sprintf("%s/.casher", os.Getenv("HOME")),
+			Value:  filepath.Join(os.Getenv("HOME"), ".casher"),
 			EnvVar: "CASHER_DIR",
 		},
 	}
