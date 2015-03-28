@@ -15,7 +15,7 @@ type Config struct {
 		PushTar   string
 	}
 
-	CasherDir string
+	CacherDir string
 	MtimeFile string
 	Md5File   string
 	FetchTar  string
@@ -32,10 +32,10 @@ func (cfg *Config) build(c *cli.Context) {
 	err := gcfg.ReadFileInto(cfg, c.String("config"))
 	check(err)
 
-	cfg.CasherDir, _ = filepath.Abs(c.String("casher_dir"))
+	cfg.CacherDir, _ = filepath.Abs(c.String("cacher_dir"))
 
-	cfg.MtimeFile, _ = filepath.Abs(filepath.Join(cfg.CasherDir, cfg.Files.MtimeFile))
-	cfg.Md5File, _ = filepath.Abs(filepath.Join(cfg.CasherDir, cfg.Files.Md5File))
-	cfg.FetchTar, _ = filepath.Abs(filepath.Join(cfg.CasherDir, cfg.Files.FetchTar))
-	cfg.PushTar, _ = filepath.Abs(filepath.Join(cfg.CasherDir, cfg.Files.PushTar))
+	cfg.MtimeFile, _ = filepath.Abs(filepath.Join(cfg.CacherDir, cfg.Files.MtimeFile))
+	cfg.Md5File, _ = filepath.Abs(filepath.Join(cfg.CacherDir, cfg.Files.Md5File))
+	cfg.FetchTar, _ = filepath.Abs(filepath.Join(cfg.CacherDir, cfg.Files.FetchTar))
+	cfg.PushTar, _ = filepath.Abs(filepath.Join(cfg.CacherDir, cfg.Files.PushTar))
 }

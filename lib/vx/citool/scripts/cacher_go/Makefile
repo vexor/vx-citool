@@ -1,7 +1,7 @@
 GO=gom
 GOFLAGS=-race
 SOURCES=*.go
-EXECUTABLE=casher_go
+EXECUTABLE=cacher_go
 
 # If the first argument is "run"...
 ifeq (run,$(firstword $(MAKECMDGOALS)))
