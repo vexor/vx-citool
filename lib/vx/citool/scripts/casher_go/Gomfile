@@ -1,0 +1,6 @@
+gom 'code.google.com/p/gcfg'
+gom 'code.google.com/p/gcfg/scanner'
+gom 'code.google.com/p/gcfg/token'
+gom 'code.google.com/p/gcfg/types'
+gom 'github.com/codegangsta/cli'
+gom 'gopkg.in/yaml.v2'
