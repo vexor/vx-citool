@@ -1,88 +1,14 @@
 package main
 
 import (
-	"code.google.com/p/gcfg"
 	"fmt"
 	"github.com/codegangsta/cli"
-	"gopkg.in/yaml.v2"
-	"io/ioutil"
 	"log"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"sync"
 	"time"
 )
-
-// TODO: extract into file
-type Mtimes map[string]int64
-
-func (mtimes *Mtimes) restore() {
-	*mtimes = make(Mtimes)
-	yml, _ := ioutil.ReadFile(cfg.MtimeFile)
-	yaml.Unmarshal(yml, mtimes)
-}
-
-func (mtimes Mtimes) store() {
-	yml, _ := yaml.Marshal(mtimes)
-	ioutil.WriteFile(cfg.MtimeFile, yml, 0644)
-}
-
-// TODO: extract into file
-type Config struct {
-	Files struct {
-		MtimeFile string
-		Md5File   string
-		FetchTar  string
-		PushTar   string
-	}
-
-	CasherDir string
-	MtimeFile string
-	Md5File   string
-	FetchTar  string
-	PushTar   string
-}
-
-var (
-	cfg    Config
-	mtimes Mtimes
-)
-
-// Builds the global configuration structure
-func (cfg *Config) build(c *cli.Context) {
-	err := gcfg.ReadFileInto(cfg, c.String("config"))
-	check(err)
-
-	cfg.CasherDir, _ = filepath.Abs(c.String("casher_dir"))
-
-	cfg.MtimeFile, _ = filepath.Abs(filepath.Join(cfg.CasherDir, cfg.Files.MtimeFile))
-	cfg.Md5File, _ = filepath.Abs(filepath.Join(cfg.CasherDir, cfg.Files.Md5File))
-	cfg.FetchTar, _ = filepath.Abs(filepath.Join(cfg.CasherDir, cfg.Files.FetchTar))
-	cfg.PushTar, _ = filepath.Abs(filepath.Join(cfg.CasherDir, cfg.Files.PushTar))
-}
-
-// TODO: extract into file
-func check(e error) {
-	if e != nil {
-		log.Fatal(e)
-	}
-}
-
-// External command execution wrapper for tar WITH OPTIONAL CALLBACK TO HANDLE ERROR
-func tar(errCallback func(), flag string, tarFileName string, args ...string) {
-	flags := fmt.Sprintf("-Pz%sf", flag)
-	args = append([]string{flags, tarFileName}, args...)
-	cmd := exec.Command("tar", args...)
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		if errCallback != nil {
-			errCallback()
-		} else {
-			log.Printf("FAILED: %s => %s", cmd.Args, out)
-		}
-	}
-}
 
 // Sets up application's configuration
 func prepareApp(c *cli.Context) (err error) {
