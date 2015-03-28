@@ -156,6 +156,60 @@ vxvm_location () {
   )
 }
 
+vxvm_create_wrapper() {
+  local src=$1
+  local dst=$2
+  local activate=$3
+
+  rm -f "$dst"
+
+  cat > "$dst" <<- EOF
+  #!/bin/sh
+
+  $(cat $activate)
+
+  exec "$src" "\$*"
+EOF
+
+  chmod +x "$dst"
+}
+
+vxvm_use () {
+  local lang=$1
+  local version=$2
+
+  test "x$lang" = "x" && vxvm_usage "location"
+  test "x$version" = "x" && vxvm_usage "location"
+
+  vxvm_search_in_repo $lang $version
+  vxvm_valid_package_url
+
+  local id=$(vxvm_extract_id)
+
+  test -d $pkg_install_path/$id || (
+    echoerr "cannot found $lang $version"
+    exit 1
+  )
+
+  test -d $pkg_install_path/$id/bin && (
+    for f in $(find $pkg_install_path/$id/bin -executable \( -type l -o -type f \)) ; do
+      local name=$(basename $f)
+      local file=$(readlink -f $f)
+      vxvm_create_wrapper "$file" "/usr/local/bin/${name}"  $pkg_install_path/$id/activate
+    done
+  )
+
+  test -d $pkg_install_path/$id/sbin && (
+    for f in $(find $pkg_install_path/$id/sbin -executable \( -type l -o -type f \)) ; do
+      local name=$(basename $f)
+      local file=$(readlink -f $f)
+      vxvm_create_wrapper "$file" "/usr/local/sbin/${name}"  $pkg_install_path/$id/activate
+    done
+  )
+
+  true
+}
+
 case $1 in
   search)
     vxvm_search $2 $3
@@ -165,6 +219,9 @@ case $1 in
     ;;
   location)
     vxvm_location $2 $3
+    ;;
+  use)
+    vxvm_use $2 $3
     ;;
   *)
     echo "Usage vxvm (search|install|location)"
