@@ -42,16 +42,14 @@ func main() {
 		{
 			Name:    "add",
 			Aliases: []string{"a"},
-			Usage:   "adds paths to cache",
+			Usage:   "adds listed paths to cache",
 			Action:  doAdd,
 		},
 		{
 			Name:    "fetch",
 			Aliases: []string{"f"},
-			Usage:   "TODO: WRITEME",
-			Action: func(c *cli.Context) {
-				fmt.Println("fetching")
-			},
+			Usage:   "fetching an archive from a specified url",
+			Action:  doFetch,
 		},
 		{
 			Name:    "push",
