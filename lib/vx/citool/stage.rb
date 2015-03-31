@@ -44,8 +44,8 @@ module Vx
               log_value = value
             end
 
+            a.invoke_shell("export #{name}=#{value}", hidden: true)
             log_command "export #{name}=#{log_value}"
-            ENV[name] = value
           end
 
           invoke_tasks
