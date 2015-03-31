@@ -35,15 +35,16 @@ module Vx
             return re unless re.success?
           end
 
-          re = environment.reduce(a::Succ.new(0)) do |re, pair|
-            break re unless re.success?
-            add_env(*pair)
+          re, failed = environment.reduce([a::Succ.new(0), []]) do |memo, pair|
+            re, prev = memo
+            break re, prev unless re.success?
+            [add_env(*pair), pair]
           end
 
           if re.success?
             invoke_tasks
           else
-            re
+            a::Fail.new(1, "Failed to export #{failed[0]}")
           end
         end
       end
