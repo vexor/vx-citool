@@ -35,20 +35,16 @@ module Vx
             return re unless re.success?
           end
 
-          environment.each_pair do |name, value|
-            value = a.normalize_env_value(value)
-            if value[0] == "!"
-              value     = value[1..-1]
-              log_value = secure_env_value(value)
-            else
-              log_value = value
-            end
-
-            a.invoke_shell("export #{name}=#{value}", hidden: true)
-            log_command "export #{name}=#{log_value}"
+          re = environment.reduce(a::Succ.new(0)) do |re, pair|
+            break unless re.success?
+            add_env(*pair)
           end
 
-          invoke_tasks
+          if re.success?
+            invoke_tasks
+          else
+            re
+          end
         end
       end
 
@@ -85,6 +81,21 @@ module Vx
       end
 
       private
+
+      def add_env(name, value)
+        value = a.normalize_env_value(value)
+
+        if value[0] == "!"
+          value     = value[1..-1]
+          log_value = secure_env_value(value)
+        else
+          log_value = value
+        end
+
+        a.invoke_shell("export #{name}=#{value}", hidden: true).tap do |r|
+          log_command "export #{name}=#{log_value}" if r.success?
+        end
+      end
 
       def secure_env_value(value)
         value.gsub(/[^\s]/, '*')
