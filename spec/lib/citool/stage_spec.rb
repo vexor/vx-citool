@@ -33,7 +33,10 @@ describe Vx::Citool::Stage do
 
   context "failing environment" do
     let(:environment) do
-      { "BAD_VAR" => "bad var (is here)" }
+      { "GOOD_VAR" => "good_var",
+        "BAD_VAR" => "bad var (is here)",
+        "GOOD_VAR2" => "good_var_2"
+      }
     end
 
     it "fails" do
