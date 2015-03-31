@@ -41,6 +41,7 @@ describe Vx::Citool::Stage do
 
     it "fails" do
       expect(subject.code).not_to eq 0
+      expect(subject.message).to eq "Failed to export BAD_VAR"
     end
   end
 end
