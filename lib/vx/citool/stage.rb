@@ -36,7 +36,7 @@ module Vx
           end
 
           re = environment.reduce(a::Succ.new(0)) do |re, pair|
-            break unless re.success?
+            break re unless re.success?
             add_env(*pair)
           end
 
