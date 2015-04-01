@@ -48,6 +48,34 @@ describe Vx::Citool::Actions, '(shell)' do
     re = shell("export FOO=$HOME/$(pwd)")
     expect(re).to be_success
     expect(ENV['FOO']).to eq "#{ENV['HOME']}/#{Dir.pwd}"
+
+    re = shell("export FOO=~/.dir")
+    expect(re).to be_success
+    expect(ENV['FOO']).to eq "#{ENV['HOME']}/.dir"
+
+    re = shell("export FOO=\"~/.dir\"")
+    expect(re).to be_success
+    expect(ENV['FOO']).to eq "~/.dir"
+  end
+
+  it "should run with pipes" do
+    re = shell("seq 1 100 | grep --color=none 33", silent: true)
+    expect(re).to be_success
+    expect(re.data).to eq "33\r\n"
+  end
+
+  it "should run with quotes" do
+    re = shell("echo \"foo bar\"", silent: true)
+    expect(re).to be_success
+    expect(re.data).to eq "foo bar\r\n"
+
+    re = shell("echo 'foo bar'", silent: true)
+    expect(re).to be_success
+    expect(re.data).to eq "foo bar\r\n"
+
+    re = shell("echo foo\ bar", silent: true)
+    expect(re).to be_success
+    expect(re.data).to eq "foo bar\r\n"
   end
 
   def shell(*args)
