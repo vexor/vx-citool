@@ -40,8 +40,8 @@ env_file
   it "exports and persists activate scripts" do
     subject
 
-    expect(ENV['TESTVXVM1']).to eq "\"test_1\""
-    expect(ENV['TESTVXVM2']).to eq "\"test_2\""
+    expect(ENV['TESTVXVM1']).to eq "test_1"
+    expect(ENV['TESTVXVM2']).to eq "test_2"
     expect(file.string).to eq "export TESTVXVM1=\"test_1\"\nexport TESTVXVM2=\"test_2\"\n"
   end
 end

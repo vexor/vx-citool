@@ -16,12 +16,12 @@ describe Vx::Citool::Env do
   it "#export!" do
     subject.export!("TEST", "test_val")
     expect(ENV['TEST']).to eq "test_val"
-    expect(file.string).to eq "export TEST=test_val\n"
+    expect(file.string).to eq "export TEST=\"test_val\"\n"
   end
 
   it "#persist_var!" do
     subject.persist_var!("TEST", "test_val")
-    expect(file.string).to eq "export TEST=test_val\n"
+    expect(file.string).to eq "export TEST=\"test_val\"\n"
   end
 
   it "#persist_arbitrary!" do
