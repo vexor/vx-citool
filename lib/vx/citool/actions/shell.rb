@@ -80,7 +80,7 @@ module Vx
         end
 
         log_command(title) unless hidden
-        cmd = %{/bin/sh -c #{Shellwords.escape command}}
+        cmd = ["/bin/sh", "-c", command]
 
         pid    = nil
         r      = nil
@@ -94,9 +94,9 @@ module Vx
 
         Dir.chdir(pwd) do
           if options[:detach]
-            pid = ::Process.spawn(cmd, out: "nohup.log", err: "nohup.log")
+            pid = ::Process.spawn(*cmd, out: "nohup.log", err: "nohup.log")
             Citool.teardown do
-              log_debug "kill '#{cmd}', pid #{pid}"
+              log_debug "kill #{cmd.inspect}, pid #{pid}"
               begin
                 Process.kill("KILL", pid)
                 Process.wait(pid)
@@ -104,7 +104,8 @@ module Vx
               end
             end
           else
-            r, w, pid = ::PTY.spawn(cmd)
+            r, w = ::PTY.open
+            pid  = ::Process.spawn(*cmd, in: w, out: r, err: r)
           end
         end
 
