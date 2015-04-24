@@ -4,6 +4,8 @@ require File.expand_path("../citool/log",        __FILE__)
 require File.expand_path("../citool/actions",    __FILE__)
 require File.expand_path("../citool/stage",      __FILE__)
 require File.expand_path("../citool/string",     __FILE__)
+require File.expand_path("../citool/env/var",   __FILE__)
+require File.expand_path("../citool/env",        __FILE__)
 
 module Vx
   module Citool

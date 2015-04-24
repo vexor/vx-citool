@@ -17,7 +17,8 @@ module Vx
           line  = line.strip.split("=")
           key   = line.shift
           value = line.join("=")
-          ENV[key] = value
+
+          Env.persist_var!(key, "#{value}")
         end
 
         re

@@ -37,7 +37,6 @@ module Vx
       end
 
       def invoke_shell(args, options = {})
-
         command = nil
         chdir   = nil
 
@@ -48,7 +47,7 @@ module Vx
           command = args.to_s
         end
 
-        command = normalize_env_value(command)
+        command = Citool::Env.normalize(command)
 
         if SHELL_IGNORED_COMMANDS.include?(command)
           log_error("The command '#{command}' ignored, if you really need to do it, please contact us")
@@ -136,7 +135,7 @@ module Vx
           env, file = options[:capture_env]
           if File.readable?(file)
             value = File.read(file)
-            ENV[env] = value.strip
+            Env.persist_var!(env, value.strip)
           end
         end
 

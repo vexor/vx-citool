@@ -31,7 +31,7 @@ module Vx
       def invoke
         log_stage name do
           if chdir
-            re = a.invoke_chdir(chdir)
+            re = a.invoke_chdir(chdir, persist: true)
             return re unless re.success?
           end
 
@@ -84,22 +84,7 @@ module Vx
       private
 
       def add_env(name, value)
-        value = a.normalize_env_value(value)
-
-        if value[0] == "!"
-          value     = value[1..-1]
-          log_value = secure_env_value(value)
-        else
-          log_value = value
-        end
-
-        a.invoke_shell("export #{name}=#{value}", hidden: true).tap do |r|
-          log_command "export #{name}=#{log_value}" if r.success?
-        end
-      end
-
-      def secure_env_value(value)
-        value.gsub(/[^\s]/, '*')
+        Env.export!(name, value)
       end
 
     end
