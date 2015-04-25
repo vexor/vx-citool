@@ -104,8 +104,7 @@ module Vx
               end
             end
           else
-            r, w = ::PTY.open
-            pid  = ::Process.spawn(*cmd, in: w, out: r, err: r)
+            r, w, pid = ::PTY.spawn(*cmd)
           end
         end
 
