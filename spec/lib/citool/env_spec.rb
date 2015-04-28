@@ -20,7 +20,7 @@ describe Vx::Citool::Env do
   end
 
   it "#persist_var!" do
-    subject.persist_var!("TEST", "test_val")
+    subject.persist_var!("TEST", "test_val\r\n")
     expect(file.string).to eq "export TEST=\"test_val\"\n"
   end
 

@@ -17,8 +17,9 @@ module Vx
       end
 
       def persist_var!(key, value, opts = {})
-        ENV[key] = value
-        persist_arbitrary!("export #{key}=\"#{value}\"", opts)
+        v = value.chomp
+        ENV[key] = v
+        persist_arbitrary!("export #{key}=\"#{v}\"", opts)
       end
 
       def persist_arbitrary!(val, opts = {})
