@@ -18,7 +18,7 @@ module Vx
 
         def export_value
           "export " +
-          "#{@key}=#{secure? ? @value[1..-1] : @value}"
+          "#{@key}=#{secure? ? @value[1..-1] : @value}".chomp
         end
 
         def secure_value

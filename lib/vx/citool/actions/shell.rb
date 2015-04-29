@@ -68,7 +68,7 @@ module Vx
           options[:detach] = true
         end
 
-        if command =~ /^export (.+)=(.*)$/
+        if command =~ /^export (.+?)=(.*)$/
           title   = command
           file    = "#{Dir.tmpdir}/.captured_#{$1}"
           command = "echo #{$2} > #{file}"
