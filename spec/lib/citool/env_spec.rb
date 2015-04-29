@@ -24,6 +24,13 @@ describe Vx::Citool::Env do
     expect(file.string).to eq "export TEST=\"test_val\"\n"
   end
 
+  it "(bug) jruby options" do
+    subject.export!("JRUBY_OPTS", "\"-Xcext.enabled=true\"")
+    expect(ENV['JRUBY_OPTS']).to eq "-Xcext.enabled=true"
+    expect(file.string).to eq "export JRUBY_OPTS=\"-Xcext.enabled=true\"\n"
+  end
+
+
   it "#persist_arbitrary!" do
     subject.persist_arbitrary!("exec echo hey there")
     expect(file.string).to eq "exec echo hey there\n"
