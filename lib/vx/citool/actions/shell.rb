@@ -63,6 +63,10 @@ module Vx
           command  = found
         end
 
+        if command =~ /^source (.*)$/
+          command = ". #{$1}"
+        end
+
         if command =~ /^nohup (.*)$/
           command = $1
           options[:detach] = true
