@@ -17,6 +17,8 @@ module Vx
       end
 
       def persist_var!(key, value, opts = {})
+        return if !ENV[key].nil? && !opts[:force]
+
         v = value.chomp
         ENV[key] = v
         persist_arbitrary!("export #{key}=\"#{v}\"", opts)

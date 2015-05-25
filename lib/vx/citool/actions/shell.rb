@@ -54,6 +54,10 @@ module Vx
           return Succ.new(0, "The command '#{command}' exited with unknown status")
         end
 
+        if !options[:source] && command =~ /^(source|\.) (.*)$/
+          return invoke_shell_source($2)
+        end
+
         silent  = options[:silent]
         title   = options[:title] || command
         hidden  = options[:hidden]
@@ -61,10 +65,6 @@ module Vx
         if found = SHELL_ALIAS[command]
           title = command
           command  = found
-        end
-
-        if command =~ /^source (.*)$/
-          command = ". #{$1}"
         end
 
         if command =~ /^nohup (.*)$/
@@ -139,7 +139,7 @@ module Vx
           env, file = options[:capture_env]
           if File.readable?(file)
             value = File.read(file)
-            Env.persist_var!(env, value.strip)
+            Env.persist_var!(env, value.strip, force: true)
           end
         end
 
@@ -171,6 +171,22 @@ module Vx
           Fail.new(exit_code, message, captured_output)
         end
 
+      end
+
+      def invoke_shell_source(source)
+        re = invoke_shell(". #{source} ; env", silent: true, source: true)
+
+        return re unless re.success?
+
+        re.data.lines.each do |line|
+          line  = line.strip.split("=")
+          key   = line.shift
+          value = line.join("=")
+
+          Env.persist_var!(key, "#{value}")
+        end
+
+        re
       end
 
     end

@@ -8,22 +8,8 @@ module Vx
         re = invoke_shell("#{vxvm} install #{args}", silent: true, title: "vxvm install #{args}")
         return re unless re.success?
 
-        source = re.data.strip
-
-        re = invoke_shell(". #{source} ; env", silent: true)
-        return re unless re.success?
-
-        re.data.lines.each do |line|
-          line  = line.strip.split("=")
-          key   = line.shift
-          value = line.join("=")
-
-          Env.persist_var!(key, "#{value}")
-        end
-
-        re
+        invoke_shell_source(re.data.strip)
       end
-
     end
   end
 end
