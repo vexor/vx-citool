@@ -16,9 +16,13 @@ module Vx
         end
       end
 
-      def persist_var!(key, value, opts = {})
-        return if !ENV[key].nil? && !opts[:force]
+      def reset!(opts = {})
+        file = init_file(opts)
+        file.truncate(0)
+        file.close
+      end
 
+      def persist_var!(key, value, opts = {})
         v = value.chomp
         ENV[key] = v
         persist_arbitrary!("export #{key}=\"#{v}\"", opts)

@@ -139,7 +139,7 @@ module Vx
           env, file = options[:capture_env]
           if File.readable?(file)
             value = File.read(file)
-            Env.persist_var!(env, value.strip, force: true)
+            Env.persist_var!(env, value.strip)
           end
         end
 
@@ -173,10 +173,12 @@ module Vx
 
       end
 
-      def invoke_shell_source(source)
+      def invoke_shell_source(source, opts = {})
         re = invoke_shell(". #{source} ; env", silent: true, source: true)
 
         return re unless re.success?
+
+        Env.reset!
 
         re.data.lines.each do |line|
           line  = line.strip.split("=")
