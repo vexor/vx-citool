@@ -11,6 +11,10 @@ describe Vx::Citool::Actions do
       @string = ""
     end
 
+    def truncate(i)
+      @string = ""
+    end
+
     def close; end
 
     def puts(data)
