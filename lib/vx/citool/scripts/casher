@@ -164,8 +164,9 @@ class Casher
   end
 
   def unchanged?(file, mtime)
-    return true if unchanged_mtime?(file, mtime)
-    md5sums[file] and md5sums[file] == md5(file)
+    return false unless md5sums[file]
+    return true  if unchanged_mtime?(file, mtime)
+    md5sums[file] == md5(file)
   end
 
   def unchanged_mtime?(file, mtime)
