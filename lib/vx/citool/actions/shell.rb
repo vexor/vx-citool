@@ -54,6 +54,10 @@ module Vx
           return Succ.new(0, "The command '#{command}' exited with unknown status")
         end
 
+        if !options[:source] && command =~ /^(source|\.) (.*)$/
+          return invoke_shell_source($2)
+        end
+
         silent  = options[:silent]
         title   = options[:title] || command
         hidden  = options[:hidden]
@@ -167,6 +171,24 @@ module Vx
           Fail.new(exit_code, message, captured_output)
         end
 
+      end
+
+      def invoke_shell_source(source, opts = {})
+        re = invoke_shell(". #{source} ; env", silent: true, source: true)
+
+        return re unless re.success?
+
+        Env.reset!
+
+        re.data.lines.each do |line|
+          line  = line.strip.split("=")
+          key   = line.shift
+          value = line.join("=")
+
+          Env.persist_var!(key, "#{value}")
+        end
+
+        re
       end
 
     end

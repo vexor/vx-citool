@@ -78,6 +78,19 @@ describe Vx::Citool::Actions, '(shell)' do
     expect(re.data).to eq "foo bar\r\n"
   end
 
+  it "should replace source to ." do
+    re = shell("source ./test_env")
+    expect(re.message).to match %r{^The command '\. \.\/test_env ; env' .+}
+  end
+
+  it "source loads env" do
+    re = shell("source #{File.expand_path "./spec/fixtures/test_env"}")
+    expect(re).to be_success
+    expect(ENV['SOURCE']).to eq "working"
+  end
+
+
+
   def shell(*args)
     @shell ||= ShellTest.new
     @shell.invoke_shell(*args)

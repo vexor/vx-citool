@@ -16,6 +16,12 @@ module Vx
         end
       end
 
+      def reset!(opts = {})
+        file = init_file(opts)
+        file.truncate(0)
+        file.close
+      end
+
       def persist_var!(key, value, opts = {})
         v = value.chomp
         ENV[key] = v
