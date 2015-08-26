@@ -1,0 +1,11 @@
+#!/bin/bash
+
+set -e
+
+sudo mkdir -p /usr/share/man/man1/
+
+source $(which jdk_switcher.sh)
+jdk_switcher use $1
+echo $JAVA_HOME > $2
+
+exit 0

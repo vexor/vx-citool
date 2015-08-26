@@ -8,6 +8,7 @@ require File.expand_path("../actions/cache",      __FILE__)
 require File.expand_path("../actions/services",   __FILE__)
 require File.expand_path("../actions/python",     __FILE__)
 require File.expand_path("../actions/scala",      __FILE__)
+require File.expand_path("../actions/jdk",        __FILE__)
 
 module Vx
   module Citool
