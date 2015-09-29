@@ -41,6 +41,7 @@ module Vx
         teardown_stage = nil
 
         stages = yaml.inject([]) do |a, stage_options|
+          puts "stage_options: #{stage_options.inspect}"
           stage = Stage.new(stage_options)
           if stage.teardown?
             teardown_stage = stage
