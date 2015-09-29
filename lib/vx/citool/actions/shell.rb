@@ -8,7 +8,8 @@ module Vx
 
       SHELL_ALIAS = {
         "parallel_rspec"   => File.expand_path("../../scripts/vx_parallel_rspec",   __FILE__),
-        "parallel_spinach" => File.expand_path("../../scripts/vx_parallel_spinach", __FILE__)
+        "parallel_spinach" => File.expand_path("../../scripts/vx_parallel_spinach", __FILE__),
+        "parallel_cucumber"   => File.expand_path("../../scripts/vx_parallel_cucumber",   __FILE__)
       }
 
       # TODO: remove
