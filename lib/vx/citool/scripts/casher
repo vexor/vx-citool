@@ -37,7 +37,7 @@ class Casher
         [chunk, Base64.strict_encode64(Digest::MD5.file(chunk).hexdigest)]
       end
 
-      files
+      files.sort_by(&:first)
     end
   end
 
