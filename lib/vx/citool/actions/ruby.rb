@@ -60,6 +60,35 @@ test:
           end
         end
 
+        class RubyVersion
+          VERSION_REGEXP = /(((\d\.){1,2})?\d)/mx
+          attr_reader :path, :filename
+
+          def initialize(args = {})
+            @path     = args.fetch(:path, Dir.pwd)
+            @filename = args.fetch(:filename, ".ruby-version")
+            @content  = args[:content]
+          end
+
+          def ruby_version
+            if content && content.match(VERSION_REGEXP)
+              $1
+            end
+          end
+
+          def content
+            @content ||= (File.read(location) if exists?)
+          end
+
+          def location
+            @location ||= File.join(path, filename)
+          end
+
+          def exists?
+            File.exists?(location) && File.file?(location)
+          end
+        end
+
         class Gemfile
           def location
             @location ||= ENV['BUNDLE_GEMFILE'] || "#{Dir.pwd}/Gemfile"
@@ -171,9 +200,10 @@ test:
       end
 
       def invoke_ruby(args, options = {})
-        gemfile  = Ruby::Gemfile.new
-        database = Ruby::Database.new self, gemfile
-        secrets  = Ruby::Secrets.new self, gemfile
+        rubyversion = Ruby::RubyVersion.new
+        gemfile     = Ruby::Gemfile.new
+        database    = Ruby::Database.new self, gemfile
+        secrets     = Ruby::Secrets.new self, gemfile
 
         if args.is_a?(String)
           action = args
@@ -186,7 +216,7 @@ test:
 
         when "install"
           version =
-            if r = gemfile.ruby_version
+            if r = rubyversion.ruby_version || gemfile.ruby_version
               if args['ruby']
                 if args['ruby'].to_s.match(/^#{Regexp.escape r}/)
                   args['ruby']
