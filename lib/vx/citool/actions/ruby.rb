@@ -3,6 +3,7 @@ module Vx
 
     module Actions
       DEFAULT_BUNDLER_ARGS = "--clean --retry=3 --jobs=4"
+      DEFAULT_RUBY = '2.0.0'
 
       PG_CONFIG = "
 test:
@@ -216,7 +217,7 @@ test:
 
         when "install"
           version =
-            if r = rubyversion.ruby_version || gemfile.ruby_version
+            if r = gemfile.ruby_version || args['ruby'] || rubyversion.ruby_version || DEFAULT_RUBY
               if args['ruby']
                 if args['ruby'].to_s.match(/^#{Regexp.escape r}/)
                   args['ruby']
