@@ -61,7 +61,7 @@ test:
         end
 
         class RubyVersion
-          VERSION_REGEXP = /(((\d\.){1,2})?\d)/mx
+          VERSION_REGEXP = /(((\d\.){1,2})?\d+)/mx
           attr_reader :path, :filename
 
           def initialize(args = {})
@@ -216,7 +216,7 @@ test:
 
         when "install"
           version =
-            if r = rubyversion.ruby_version || gemfile.ruby_version
+            if r = gemfile.ruby_version || rubyversion.ruby_version # Gemfile has the highest priority ( block version )
               if args['ruby']
                 if args['ruby'].to_s.match(/^#{Regexp.escape r}/)
                   args['ruby']
