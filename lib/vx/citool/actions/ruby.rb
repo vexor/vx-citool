@@ -233,10 +233,11 @@ test:
           re = invoke_vxvm("ruby #{version}")
           return re unless re.success?
 
-          if ENV['GEM_HOME']
-            re = invoke_shell("export PATH=$GEM_HOME/bin:$PATH")
-          end
-          return re unless re.success?
+          # TODO: Try to remove system GEM_HOME
+          # if ENV['GEM_HOME']
+          #   re = invoke_shell("export PATH=$GEM_HOME/bin:$PATH")
+          # end
+          # return re unless re.success?
 
           unless ENV["NOKOGIRI_USE_SYSTEM_LIBRARIES"]
             re = invoke_shell("export NOKOGIRI_USE_SYSTEM_LIBRARIES=1")
