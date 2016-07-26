@@ -84,8 +84,7 @@ class Casher
 
   def push_chunks(url)
     re = [ @push_tar ].all? do |file|
-      url
-      cmd = "curl -XPUT -s -S -m 60 -T %p %p" % [file, chunk_url]
+      cmd = "curl -XPUT -s -S -m 60 -T %p %p" % [file, url]
       print "."
       system cmd
     end
