@@ -27,6 +27,7 @@ class Casher
 
   def fetch_body(url)
     begin
+      puts "Fetch cache url: #{url}"
       open(url) {|io| io.gets }
     rescue Exception => e
       $stderr.puts "#{e.class} - #{e.message}"
