@@ -3,7 +3,7 @@ module Vx
 
     module Actions
 
-      CASHER = File.expand_path("../../scripts/casher_aws", __FILE__)
+      CASHER = File.expand_path("../../scripts/casher", __FILE__)
 
       def invoke_cache_fetch(args, options = {})
         url    = args["url"].join(" ")
