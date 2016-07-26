@@ -154,3 +154,5 @@ class Casher
     block.call unless system "#{command} 2>#{@casher_dir}/tar.err.log >#{@casher_dir}/tar.log"
   end
 end
+
+Casher.new.run(*ARGV) if $0 == __FILE__
