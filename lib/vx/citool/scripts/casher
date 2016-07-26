@@ -43,7 +43,6 @@ class Casher
 
   def fetch_body(url)
     begin
-      puts "Fetch from url: #{url}"
       open(url) {|io| io.gets }
     rescue Exception => e
       $stderr.puts "#{e.class} - #{e.message}"
@@ -90,7 +89,7 @@ class Casher
       return false
     end
 
-    print "uploading chunks to url: #{url}"
+    print "uploading chunks to url "
 
     re = chunks.all? do |file, md5|
       chunk_url = "#{url}&comp=block&blockid=#{CGI.escape md5}"
