@@ -6,6 +6,7 @@ require 'open-uri'
 require 'digest/md5'
 require 'base64'
 require 'cgi'
+require File.expand_path('../patches/redirections_patch', __FILE__)
 
 class Casher
   include FileUtils
@@ -28,7 +29,7 @@ class Casher
   def fetch_body(url)
     begin
       puts "Fetch cache url: #{url}"
-      open(url) {|io| io.gets }
+      open(url, allow_redirections: :safe) {|io| io.gets }
     rescue Exception => e
       $stderr.puts "#{e.class} - #{e.message}"
     end
