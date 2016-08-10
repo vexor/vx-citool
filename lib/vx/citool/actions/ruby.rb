@@ -62,7 +62,6 @@ test:
 
         class RubyVersion
           VERSION_REGEXP = /(((\d\.){1,2})?\d)/mx
-          DEFAULT_VERSION = "2.0.0"
           attr_reader :path, :filename
 
           def initialize(args = {})
@@ -74,8 +73,6 @@ test:
           def ruby_version
             if content && content.match(VERSION_REGEXP)
               $1
-            else
-              DEFAULT_VERSION
             end
           end
 

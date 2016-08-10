@@ -29,8 +29,8 @@ describe Vx::Citool::Actions::Ruby::RubyVersion do
 
   describe "with wrong location" do
     let(:rubyversion) {described_class.new(path: "/tmp")}
-    it "should be default (not raise error)" do
-      expect(rubyversion.ruby_version).to eq(Vx::Citool::Actions::Ruby::RubyVersion::DEFAULT_VERSION)
+    it "should be nil (not raise error)" do
+      expect(rubyversion.ruby_version).to be_nil
     end
   end
 end
