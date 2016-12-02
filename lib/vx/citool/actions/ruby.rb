@@ -221,7 +221,7 @@ test:
                 if args['ruby'].to_s.match(/^#{Regexp.escape r}/)
                   args['ruby']
                 else
-                  log_notice "Force using the ruby version '#{r}' instread '#{args['ruby']}', specified in the Gemfile"
+                  log_notice "Force using the ruby version '#{r}' instead '#{args['ruby']}', specified in the Gemfile"
                   r
                 end
               else

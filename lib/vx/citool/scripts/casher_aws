@@ -1,0 +1,159 @@
+#!/usr/bin/env ruby
+require 'shellwords'
+require 'fileutils'
+require 'yaml'
+require 'open-uri'
+require 'digest/md5'
+require 'base64'
+require 'cgi'
+require File.expand_path('../patches/redirections_patch', __FILE__)
+
+class Casher
+  include FileUtils
+
+  def initialize
+    @casher_dir = ENV['CASHER_DIR'] || File.expand_path(".casher", ENV["HOME"])
+    @mtime_file = File.expand_path('mtime.yml', @casher_dir)
+    @md5_file   = File.expand_path('md5.yml',   @casher_dir)
+    @fetch_tar  = File.expand_path('fetch.tgz', @casher_dir)
+    @push_tar   = File.expand_path('push.tgz',  @casher_dir)
+    @mtimes     = File.exist?(@mtime_file) ? YAML.load_file(@mtime_file) : {}
+    mkdir_p @casher_dir
+  end
+
+  def run(command, *arguments)
+    raise "unknown command" unless %w[fetch add push].include? command
+    send(command, *arguments)
+  end
+
+  def fetch_body(url)
+    begin
+      puts "Fetch cache url: #{url}"
+      open(url, allow_redirections: :safe) {|io| io.gets }
+    rescue Exception => e
+      $stderr.puts "#{e.class} - #{e.message}"
+    end
+  end
+
+  def fetch(*urls)
+    puts "attempting to download cache archive"
+    res =  urls.any? do |url|
+      new_url = fetch_body(url)
+      if new_url
+        cmd =  "curl -m 30 -L --tcp-nodelay -f -s %p -o %p >#{@casher_dir}/fetch.log 2>#{@casher_dir}/fetch.err.log" % [new_url, @fetch_tar]
+        system cmd
+      end
+    end
+
+    if res
+      puts "found cache"
+      puts "extracting checksums"
+      tar(:x, @fetch_tar, @md5_file) { puts "checksums not yet calculated, skipping" }
+    else
+      puts "could not download cache"
+      if File.exist? @fetch_tar
+        rm @fetch_tar
+      end
+    end
+  end
+
+  def add(*paths)
+    paths.each do |path|
+      path = File.expand_path(path)
+      puts "adding #{path} to cache"
+      mkdir_p path
+      tar(:x, @fetch_tar, path) { puts "#{path} is not yet cached" }
+      @mtimes[path] = Time.now.to_i
+    end
+    File.open(@mtime_file, 'w') { |f| f << @mtimes.to_yaml }
+  end
+
+  def push(url)
+    if changed?
+      puts "changes detected, packing new archive"
+      store_md5
+      tar(:c, @push_tar, @md5_file, *@mtimes.keys)
+      new_url = fetch_body(url)
+      if new_url
+        push_chunks(new_url)
+      else
+        puts "failed to retrieve cache url"
+      end
+    else
+      puts "nothing changed, not updating cache"
+    end
+  end
+
+  def push_chunks(url)
+    re = [ @push_tar ].all? do |file|
+      cmd = "curl -XPUT -s -S -m 60 -T %p %p" % [file, url]
+      print "."
+      system cmd
+    end
+
+    print(re ? " OK\n" : " FAIL\n")
+    return false unless re
+  end
+
+  def changed?
+    return true unless File.exist? @fetch_tar
+    each_file do |file, mtime|
+      next if unchanged? file, mtime
+      puts "#{file} was modified"
+      return true
+    end
+    return false
+  end
+
+  def md5sums
+    @md5sums ||= File.exist?(@md5_file) ? YAML.load_file(@md5_file) : {}
+  end
+
+  def md5(file)
+    sum = `md5sum #{Shellwords.escape(file)}`.split(" ", 2).first
+    sum.to_s.empty? ? Time.now.to_i : sum
+  end
+
+  def each_file
+    @mtimes.each do |path, mtime|
+      Dir.glob("#{path}/**/*") do |file|
+        yield file, mtime unless File.directory?(file)
+      end
+    end
+  end
+
+  def unchanged?(file, mtime)
+    return false unless md5sums[file]
+    return true  if unchanged_mtime?(file, mtime)
+    md5sums[file] == md5(file)
+  end
+
+  def unchanged_mtime?(file, mtime)
+    File.mtime(file).to_i <= mtime
+  end
+
+  def store_md5
+    $stdout.print "calculating checksums "
+    $stdout.flush
+    new_md5sums = {}
+    each_file do |file, mtime|
+      if unchanged_mtime?(file, mtime) && md5sums.include?(file)
+        new_md5sums[file] = md5sums[file]
+      else
+        #$stdout.print '.'
+        #$stdout.flush
+        new_md5sums[file] = md5(file)
+      end
+    end
+    $stdout.puts
+    File.open(@md5_file, 'w') { |f| f << new_md5sums.to_yaml }
+  end
+
+  def tar(flag, file, *args, &block)
+    command = "tar -Pz#{flag}f #{Shellwords.escape(file)} #{Shellwords.join(args)}"
+    block ||= proc { puts "FAILED: #{command}", File.read("#{@casher_dir}/tar.err.log"), File.read("#{@casher_dir}/tar.log") }
+    block.call unless system "#{command} 2>#{@casher_dir}/tar.err.log >#{@casher_dir}/tar.log"
+  end
+end
+
+Casher.new.run(*ARGV) if $0 == __FILE__
