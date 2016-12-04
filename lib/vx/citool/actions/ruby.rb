@@ -199,6 +199,16 @@ test:
         end
       end
 
+      # Determines which ruby version to use:
+      #   Gemfile has highest priority
+      #   Then goes ruby version, specified in .vexor.yml
+      #   Or we use ruby from .ruby-version file
+      def ruby_version(gemfile, ruby_version_file, specified_ruby_version)
+        return gemfile.ruby_version if gemfile && gemfile.ruby_version
+        return specified_ruby_version unless specified_ruby_version.to_s.empty?
+        return ruby_version_file.ruby_version
+      end
+
       def invoke_ruby(args, options = {})
         rubyversion = Ruby::RubyVersion.new
         gemfile     = Ruby::Gemfile.new
@@ -215,21 +225,7 @@ test:
         case action
 
         when "install"
-          version =
-            if r = gemfile.ruby_version || rubyversion.ruby_version # Gemfile has the highest priority ( block version )
-              if args['ruby']
-                if args['ruby'].to_s.match(/^#{Regexp.escape r}/)
-                  args['ruby']
-                else
-                  log_notice "Force using the ruby version '#{r}' instead '#{args['ruby']}', specified in the Gemfile"
-                  r
-                end
-              else
-                r
-              end
-            else
-              args["ruby"]
-            end
+          version = ruby_version(gemfile, rubyversion, args["ruby"])
           re = invoke_vxvm("ruby #{version}")
           return re unless re.success?
 
