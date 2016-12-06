@@ -75,4 +75,12 @@ describe Vx::Citool::Actions do
       ).to eq(ruby_version.ruby_version)
     end
   end
+
+  describe "#ruby_version when nothing passed" do
+    it "should return default ruby version" do
+      expect(
+        described_class.ruby_version(nil, nil, nil)
+      ).to eq(Vx::Citool::Actions::DEFAULT_RUBY_VERSION)
+    end
+  end
 end

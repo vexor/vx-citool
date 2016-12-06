@@ -4,6 +4,8 @@ module Vx
     module Actions
       DEFAULT_BUNDLER_ARGS = "--clean --retry=3 --jobs=4"
 
+      DEFAULT_RUBY_VERSION = '2.2.0'
+
       PG_CONFIG = "
 test:
   adapter: postgresql
@@ -202,11 +204,33 @@ test:
       # Determines which ruby version to use:
       #   Gemfile has highest priority
       #   Then goes ruby version, specified in .vexor.yml
-      #   Or we use ruby from .ruby-version file
+      #   Then ruby from .ruby-version file
+      #   Or we use DEFAULT RUBY VERSION
       def ruby_version(gemfile, ruby_version_file, specified_ruby_version)
-        return gemfile.ruby_version if gemfile && gemfile.ruby_version
-        return specified_ruby_version unless specified_ruby_version.to_s.empty?
-        return ruby_version_file.ruby_version
+        ruby, ruby_source = if gemfile && gemfile.ruby_version
+                              [gemfile.ruby_version, :gemfile]
+                            elsif !specified_ruby_version.to_s.empty?
+                              [specified_ruby_version, :vexor_yml]
+                            elsif ruby_version_file && ruby_version_file.ruby_version
+                              [ruby_version_file.ruby_version, :ruby_version]
+                            else
+                              [DEFAULT_RUBY_VERSION, nil]
+                            end
+        use_and_log_ruby(ruby, ruby_source)
+      end
+
+      def use_and_log_ruby(ruby_version, source)
+        case source
+        when :gemfile
+          log_notice "Force using the ruby version '#{ruby_version}' specified in the Gemfile"
+        when :vexor_yml
+          log_notice "Force using the ruby version '#{ruby_version}' specified in the .vexor.yml"
+        when :ruby_version
+          log_notice "Force using the ruby version '#{ruby_version}' specified in the .ruby-version"
+        else
+          log_notice "Using default ruby version '#{ruby_version}'"
+        end
+        ruby_version
       end
 
       def invoke_ruby(args, options = {})
