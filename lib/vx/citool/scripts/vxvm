@@ -4,7 +4,7 @@ set -e
 
 #
 pkg_prefix="vx-packages-"
-pkg_metadata="dists/trusty/main/binary-amd64/Packages"
+pkg_metadata="dists/trusty/COMPONENT/binary-amd64/Packages"
 pkg_host=${PKG_HOST:-http://new-repos.s3-website-us-west-1.amazonaws.com}
 pkg_install_path="/opt/vexor/packages"
 
@@ -54,10 +54,11 @@ vxvm_search_in_repo () {
   local lang=$1
   local version=$2
   local regexp="${pkg_prefix}${lang}-${version}"
+  local pkg_metadata_component="${pkg_metadata/COMPONENT/$lang}"
 
   # download metadata
   local metadata=$($mktemp)
-  $curl ${pkg_host}/${pkg_metadata} |  \
+  $curl ${pkg_host}/${pkg_metadata_component} |  \
     $awk '/Package/{ print $2} ; /Filename/ { print $2 }' | \
     xargs -n2 | \
     sort -r > $metadata
