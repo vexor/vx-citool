@@ -43,3 +43,44 @@ describe Vx::Citool::Actions::Ruby::RubyVersion do
     end
   end
 end
+
+describe Vx::Citool::Actions do
+  let(:gemfile) { Vx::Citool::Actions::Ruby::Gemfile.new }
+  let(:ruby_version) do
+    Vx::Citool::Actions::Ruby::RubyVersion.new(path: "spec/fixtures", filename: "ruby-version-2.1.10")
+  end
+  let(:vexor_yml_version) { "2.3.3" }
+
+  describe "#ruby_version with Gemfile, .ruby-version and .vexor.yml with ruby version" do
+    it "should return version, specified in Gemfile" do
+      stub(gemfile).ruby_version { "1.9.3" }
+      expect(
+        described_class.ruby_version(gemfile, ruby_version, vexor_yml_version)
+      ).to eq(gemfile.ruby_version)
+    end
+  end
+
+  describe "#ruby_version with .ruby-version and .vexor.yml with ruby version" do
+    it "should return version, specified in .vexor.yml file" do
+      expect(
+        described_class.ruby_version(nil, ruby_version, vexor_yml_version)
+      ).to eq(vexor_yml_version)
+    end
+  end
+
+  describe "#ruby_version with .ruby-version" do
+    it "should return version, specified in .ruby-version" do
+      expect(
+        described_class.ruby_version(nil, ruby_version, nil)
+      ).to eq(ruby_version.ruby_version)
+    end
+  end
+
+  describe "#ruby_version when nothing passed" do
+    it "should return default ruby version" do
+      expect(
+        described_class.ruby_version(nil, nil, nil)
+      ).to eq(Vx::Citool::Actions::DEFAULT_RUBY_VERSION)
+    end
+  end
+end
