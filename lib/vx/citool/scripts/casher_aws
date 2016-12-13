@@ -39,6 +39,7 @@ class Casher
     puts "attempting to download cache archive"
     res =  urls.any? do |url|
       new_url = fetch_body(url)
+      puts "--> Fetch cache from storage: #{new_url}"
       if new_url
         cmd =  "curl -m 30 -L --tcp-nodelay -f -s %p -o %p >#{@casher_dir}/fetch.log 2>#{@casher_dir}/fetch.err.log" % [new_url, @fetch_tar]
         system cmd
