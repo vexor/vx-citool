@@ -164,6 +164,7 @@ module Vx
         # Parse response and
         # returns array of [artefact_url, md5sums_url]
         def parse_body(body)
+          puts "--> BODY: #{body}"
           return []
         end
 
