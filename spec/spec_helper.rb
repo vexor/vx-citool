@@ -1,5 +1,6 @@
 require File.expand_path '../../lib/vx/citool', __FILE__
 Bundler.require(:test)
+require 'webmock/rspec'
 
 spec = File.dirname(__FILE__)
 

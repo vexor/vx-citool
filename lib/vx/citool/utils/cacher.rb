@@ -1,52 +1,36 @@
+require 'uri'
 require 'shellwords'
 require 'fileutils'
-require 'yaml'
-require 'open-uri'
-require 'digest/md5'
-require 'base64'
-require 'cgi'
-require File.expand_path('../redirections_patch', __FILE__)
 module Vx
   module Citool
     module Utils
       class Cacher
         include FileUtils
-        attr_reader :cache_dir
-        attr_reader :mtimes, :mtime_file
-        attr_reader :md5_file, :md5sums
-        attr_reader :artefacts_tar
 
-        def initialize(cache_dir)
-          @cache_dir = cache_dir
+        attr_reader :cacher_dir, :api_host
+        DEFAULT_CACHER_DIR = "/opt/vexor/cache"
+        DEFAULT_API_HOST = "https://ci.vexor.io:8080"
 
-          @md5_file = File.expand_path('md5.yml', cache_dir)
-          @artefacts_tar = File.expand_path('artefacts.tar', cache_dir)
-
-          @mtime_file = File.expand_path('mtime.yml', cache_dir)
-          @mtimes = File.exist?(mtime_file) ? YAML.load_file(mtime_file) : {}
-
-          mkdir_p cache_dir
+        def initialize(params = {})
+          @cacher_dir = params[:cacher_dir] || DEFAULT_CACHER_DIR
+          @api_host = params[:api_host] || DEFAULT_API_HOST
         end
 
+        # Fetch cache files from storage by url
         def fetch(*urls)
           puts "--> Attempting to download cache archive"
-          res = urls.any? do |url|
-            artefact_url, md5sums_url = parse_body(fetch_body(url))
-            if md5_summ_changed?(md5sums_url)
-              cmd =  "curl -m 30 -L --tcp-nodelay -f -s %p -o %p >#{cache_dir}/fetch.log 2>#{cache_dir}/fetch.err.log" % [artefact_url, artefacts_tar]
-              system cmd
+          files = urls.map do |url|
+            if cache_was_updated?(url)
+              puts "--> Cache was updated... Download new file from storage"
+              store_url(url)
+            else
+              puts "--> No reason to fetch new cache. Get local copy."
+              generate_file_path(url)
             end
           end
 
-          if res
-            puts "found cache"
-            puts "extracting checksums"
-            tar(:x, artefacts_tar, md5_file) { puts "checksums not yet calculated, skipping" }
-          else
-            puts "could not download cache"
-            if File.exist? artefacts_tar
-              rm artefacts_tar
-            end
+          files.all? do |filename|
+            extract(filename)
           end
         end
 
@@ -54,122 +38,74 @@ module Vx
           paths.each do |path|
             add_path(path)
           end
-          File.open(mtime_file, 'w') { |f| f << mtimes.to_yaml }
         end
 
         def push(url)
-          if changed?
-            puts "changes detected, packing new archive"
-            store_md5
-            tar(:c, push_tar, md5_file, *mtimes.keys)
-            #TODO: Add md5sum url and uploading md5sum
-            new_url = fetch_body(url)
-            if new_url
-              push_chunks(new_url)
-            else
-              puts "failed to retrieve cache url"
-            end
-          else
-            puts "nothing changed, not updating cache"
+          if globaly_changed?
+            generate_new_md5!(url)
+            archive_all_paths!
+            push_chunks(url)
           end
         end
 
         private
 
-        def add_path(path)
-          path = File.expand_path(path)
-          puts "adding #{path} to cache"
-          mkdir_p path
-          tar(:x, artefacts_tar, path) { puts "#{path} is not yet cached" }
-          mtimes[path] = Time.now.to_i
-        end
-
-        def push_chunks(url)
-          re = [ push_tar ].all? do |file|
-            cmd = "curl -XPUT -s -S -m 60 -T %p %p" % [file, url]
-            print "."
-            system cmd
-          end
-
-          print(re ? " OK\n" : " FAIL\n")
-          return false unless re
-        end
-
-        def changed?
-          return true unless File.exist? artefacts_tar
-          each_file do |file, mtime|
-            next if unchanged? file, mtime
-            puts "#{file} was modified"
+        def cache_was_updated?(url)
+          md5_url = append_to_file_url(url, ".md5")
+          origin_file_path = File.join(cacher_dir, generate_file_path(md5_url))
+          puts "[cache_was_updated?]: #{origin_file_path}"
+          if File.exist?(origin_file_path)
+            puts "File #{origin_file_path} Founded... Check it"
+            check_url = append_to_file_url(md5_url, ".check")
+            check_path = generate_file_path(check_url)
+            store_url(md5_url, to: check_path)
+            return !verify_files_identity(origin_file_path, File.join(cacher_dir, check_path)).tap do |result| 
+              FileUtils.rm_rf(File.join(cacher_dir, check_path))
+            end
+          else
+            puts "File #{origin_file_path} not found... Download new file"
+            store_url(md5_url)
             return true
           end
-          return false
         end
 
-        def unchanged?(file, mtime)
-          return false unless md5sums[file]
-          return true  if unchanged_mtime?(file, mtime)
-          md5sums[file] == md5(file)
+        # Returns relitive file path
+        def generate_file_path(url)
+          URI.parse(url).path
         end
 
-        def unchanged_mtime?(file, mtime)
-          File.mtime(file).to_i <= mtime
+        # Returns file path
+        def store_url(url, opts = {})
+          file_path = opts[:to] || generate_file_path(url)
+          resource_path = File.join(cacher_dir, file_path)
+          cmd =  "curl -m 30 -L --tcp-nodelay -f -s %p -o %p >#{cacher_dir}/fetch.log 2>#{cacher_dir}/fetch.err.log" % [url, resource_path]
+          puts "[cmd] #{cmd}"
+          system cmd
         end
 
-        def md5sums
-          @md5sums ||= File.exist?(md5_file) ? YAML.load_file(md5_file) : {}
+        # Returns boolean value for extracting
+        def extract(file_path)
+          puts "[extract] #{file_path}"
+        end
+
+        def append_to_file_url(url, suffix="")
+          URI.parse(url).tap do |new_url| 
+            new_url.path += suffix
+          end.to_s
+        end
+
+        def verify_files_identity(origin_file, checked_file)
+          puts "[verify_files_identity]: \norigin_file:  #{origin_file}\nchecked_file: #{checked_file}"
+          md5(origin_file) == md5(checked_file)
         end
 
         def md5(file)
-          sum = `md5sum #{Shellwords.escape(file)}`.split(" ", 2).first
-          sum.to_s.empty? ? Time.now.to_i : sum
-        end
-
-        def store_md5
-          new_md5sums = {}
-          each_file do |file, mtime|
-            if unchanged_mtime?(file, mtime) && md5sums.include?(file)
-              new_md5sums[file] = md5sums[file]
-            else
-              new_md5sums[file] = md5(file)
-            end
-          end
-          File.open(md5_file, 'w') { |f| f << new_md5sums.to_yaml }
-        end
-
-        def each_file
-          mtimes.each do |path, mtime|
-            Dir.glob("#{path}/**/*") do |file|
-              yield file, mtime unless File.directory?(file)
-            end
-          end
-        end
-
-        def tar(flag, file, *args, &block)
-          command = "tar -Pz#{flag}f #{Shellwords.escape(file)} #{Shellwords.join(args)}"
-          block ||= proc { puts "FAILED: #{command}", File.read("#{cache_dir}/tar.err.log"), File.read("#{cache_dir}/tar.log") }
-          block.call unless system "#{command} 2>#{cache_dir}/tar.err.log >#{cache_dir}/tar.log"
-        end
-
-        # Should return artefact_url and MD5_sums url
-        # Look at vx-web API
-        def fetch_body(url)
           begin
-            puts "Fetch cache url: #{url}"
-            open(url, allow_redirections: :safe) {|io| io.gets }
-          rescue Exception => e
-            $stderr.puts "#{e.class} - #{e.message}"
+            sum = `md5sum #{Shellwords.escape(file)}`.split(" ", 2).first
+            sum.to_s.empty? ? Time.now.to_i : sum
+          rescue
+            Time.now.to_i
           end
-        end
-
-        # Parse response and
-        # returns array of [artefact_url, md5sums_url]
-        def parse_body(body)
-          puts "--> BODY: #{body}"
-          return []
-        end
-
-        def md5_summ_changed?(md5_url)
-          false
         end
 
       end

@@ -1,10 +1,10 @@
 #!/usr/bin/env ruby
 require File.expand_path('../../utils/cacher', __FILE__)
 
-class Casher
+class CasherCLI
   attr_reader :cacher
   def initialize
-    @cacher = ::Vx::Citool::Utils::Cacher.new(ENV['CASHER_DIR'] || "/opt/vexor/cache")
+    @cacher = ::Vx::Citool::Utils::Cacher.new(cacher_dir: ENV['CASHER_DIR'] || "/opt/vexor/cache")
   end
 
   def run(command, *arguments)
@@ -14,4 +14,4 @@ class Casher
 
 end
 
-Casher.new.run(*ARGV) if $0 == __FILE__
+CasherCLI.new.run(*ARGV) if $0 == __FILE__
