@@ -21,6 +21,7 @@ module Vx
         def fetch(*urls)
           puts "--> Attempting to download cache archive"
           files = urls.map do |url|
+            puts "Fetch cache: #{url}"
             if cache_was_updated?(url)
               puts "--> Cache was updated... Download new file from storage"
               store_url(url)
@@ -52,12 +53,10 @@ module Vx
         private
 
         def decode_urls(url)
-          begin
-            data = open(url, allow_redirections: :safe) {|io| io.gets }
-            return JSON.parse(data)
-          rescue
-            return []
-          end
+          puts ">> Try to decode: #{url}"
+          data = open(url, allow_redirections: :safe) {|io| io.gets }
+          puts "[DATA]: #{data.inspect}"
+          return JSON.parse(data)
         end
 
         def cache_was_updated?(url)
@@ -81,6 +80,7 @@ module Vx
 
         # Returns relitive file path
         def generate_file_path(url)
+          puts ">>>> Generate path for url: #{url}"
           URI.parse(url).path
         end
 
