@@ -1,4 +1,5 @@
-require 'uri'
+require 'open-uri'
+require 'json'
 require 'shellwords'
 require 'fileutils'
 module Vx
@@ -50,8 +51,17 @@ module Vx
 
         private
 
+        def decode_urls(url)
+          begin
+            data = open(url, allow_redirections: :safe) {|io| io.gets }
+            return JSON.parse(data)
+          rescue
+            return []
+          end
+        end
+
         def cache_was_updated?(url)
-          md5_url = append_to_file_url(url, ".md5")
+          url, md5_url = *decode_urls(url)
           origin_file_path = File.join(cacher_dir, generate_file_path(md5_url))
           puts "[cache_was_updated?]: #{origin_file_path}"
           if File.exist?(origin_file_path)

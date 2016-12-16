@@ -20,7 +20,7 @@ module Vx
           @cache_dir = cache_dir
 
           @md5_file = File.expand_path('md5.yml', cache_dir)
-          @md5_file_tmp = File.expand_path('md5.yml', cache_dir)
+          @md5_file_tmp = File.expand_path('md5_tmp.yml', cache_dir)
           @artefacts_tar = File.expand_path('artefacts.tar', cache_dir)
 
           @mtime_file = File.expand_path('mtime.yml', cache_dir)
