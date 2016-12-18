@@ -44,7 +44,7 @@ module Vx
                 store_url(url)
               end
             else
-              wait_while_locked!(url)
+              wait_while_locked!(url, 60) #max 60 seconds wainting...
               puts "--> No reason to fetch new cache. Get local copy."
               generate_file_path(url)
             end
@@ -114,14 +114,20 @@ module Vx
         end
 
         def locked?(url)
-          lock_file = "#{absolute_path(generate_file_path(url))}.lock"
           File.exist?(lock_file)
         end
 
-        def wait_while_locked!(url)
+        def wait_while_locked!(url, timeout)
+          counter = 0
           while locked?(url)
             sleep 1
+            counter = counter + 1
           end
+          rm_rf lock_file(url) if counter >= timeout
+        end
+
+        def lock_file(url)
+          "#{absolute_path(generate_file_path(url))}.lock"
         end
 
         def absolute_path(relitive_path)
