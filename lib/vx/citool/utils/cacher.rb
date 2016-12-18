@@ -61,7 +61,6 @@ module Vx
           target_file = absolute_path(generate_file_path(url)) 
           @md5_file = absolute_path(generate_file_path(md5_url))
           @md5_storage = File.exist?(md5_file) ? YAML.load(md5_file) : {}
-          puts md5_storage.inspect
           if globaly_changed?
             generate_new_md5!(md5_file)
             archive_all_paths!(target_file)
