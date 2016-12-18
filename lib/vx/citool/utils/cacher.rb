@@ -22,7 +22,7 @@ module Vx
           @api_host = params[:api_host] || DEFAULT_API_HOST
 
           @global_storage_path = File.expand_path("~/.cacher/")
-          mkdir_p global_storage_path
+          system "sudo mkdir -p #{global_storage_path} && sudo chown vexor -R #{global_storage_path}"
           @tmime_file = File.join(global_storage_path, "tmime.yml")
           @mtimes_storage = File.exist?(tmime_file) ? YAML.load_file(tmime_file) : {}
         end
@@ -83,7 +83,7 @@ module Vx
 
         def lock!(url)
           lock_file = "#{absolute_path(generate_file_path(url))}.lock"
-          mkdir_p(File.dirname(lock_file))
+          system "sudo mkdir -p #{File.dirname(lock_file)} && sudo chown vexor -R #{File.dirname(lock_file)}"
           puts ">>> Lock download file: #{lock_file}"
           touch(lock_file)
         end
@@ -113,7 +113,7 @@ module Vx
         def add_path(path)
           path = File.expand_path(path)
           puts "adding #{path} to cache"
-          mkdir_p path
+          system "sudo mkdir -p #{path} && sudo chown vexor -R #{path}"
           mtimes_storage[path] = Time.now.to_i
         end
 
@@ -153,7 +153,7 @@ module Vx
           file_path = opts[:to] || generate_file_path(url)
           resource_path = absolute_path(file_path)
           dirname = File.dirname(resource_path)
-          mkdir_p(dirname)
+          system "sudo mkdir -p #{dirname} && sudo chown vexor -R #{dirname}"
           cmd =  "curl -m 30 -L --tcp-nodelay -f -s %p -o %p >#{cacher_dir}/fetch.log 2>#{cacher_dir}/fetch.err.log" % [url, resource_path]
           system cmd
           return file_path
@@ -224,7 +224,7 @@ module Vx
 
         def generate_new_md5!(md5_file)
           directory = File.dirname(md5_file)
-          mkdir_p(directory)
+          system "sudo mkdir -p #{directory} && sudo chown vexor -R #{directory}"
           File.open(md5_file, 'w') { |f| f << generate_md5_sums.to_yaml }
         end
 
