@@ -66,6 +66,7 @@ module Vx
           @md5_file = absolute_path(generate_file_path(md5_url))
           @md5_storage = File.exist?(md5_file) ? YAML.load_file(md5_file) : {}
           if globaly_changed?
+            puts "Cache directories or files changed..."
             with_lock(url) do
               store_new_md5!(md5_file)
               archive_all_paths!(target_file)
@@ -229,11 +230,11 @@ module Vx
           return @new_md5sums if @new_md5sums.keys.count > 0
           new_md5sums = {}
           each_file do |file, mtime|
-            if unchanged_mtime?(file, mtime) && md5_storage[file]
-              new_md5sums[file] = (md5_storage[file] || md5(file))
-            else
-              new_md5sums[file] = md5(file)
-            end
+            # if unchanged_mtime?(file, mtime) && md5_storage[file]
+            #   new_md5sums[file] = (md5_storage[file] || md5(file))
+            # else
+            # end
+            new_md5sums[file] = md5(file)
           end
           @new_md5sums = new_md5sums
           return @new_md5sums
