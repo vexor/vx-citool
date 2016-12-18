@@ -1,5 +1,5 @@
 require 'open-uri'
-require 'yaml'
+require 'csv'
 require 'shellwords'
 require 'fileutils'
 require File.expand_path('../redirections_patch', __FILE__)
@@ -13,18 +13,30 @@ module Vx
         attr_reader :global_storage_path
         attr_reader :tmime_file, :mtimes_storage
         attr_reader :md5_file, :md5_storage
+        attr_reader :debug
         DEFAULT_CACHER_DIR = "/opt/vexor/cache"
         DEFAULT_API_HOST = "https://ci.vexor.io:8080"
 
         def initialize(params = {})
           @cacher_dir = params[:cacher_dir] || DEFAULT_CACHER_DIR
           @api_host = params[:api_host] || DEFAULT_API_HOST
+          @debug = ENV["VEXOR_DEBUG"]
+          puts debug
 
           @global_storage_path = File.expand_path("~/.cacher/")
-          system "sudo mkdir -p #{global_storage_path} && sudo chown vexor -R #{global_storage_path}"
-          system "sudo mkdir -p #{cacher_dir} && sudo chown vexor -R #{cacher_dir}"
-          @tmime_file = File.join(global_storage_path, "tmime.yml")
-          @mtimes_storage = File.exist?(tmime_file) ? YAML.load_file(tmime_file) : {}
+          system "sudo mkdir -p #{global_storage_path}"
+          system "sudo chown vexor -R #{global_storage_path}" unless debug
+          system "sudo mkdir -p #{cacher_dir}"
+          system "sudo chown vexor -R #{cacher_dir}" unless debug
+          @tmime_file = File.join(global_storage_path, "tmime.data")
+          @mtimes_storage = {}
+          if File.exist?(tmime_file)
+            CSV.foreach(tmime_file) do |row|
+              if row.count > 1
+                @mtimes_storage[row[0]] = row[1]
+              end
+            end
+          end
         end
 
         # Fetch cache files from storage by url
@@ -54,7 +66,11 @@ module Vx
           paths.each do |path|
             add_path(path)
           end
-          File.open(tmime_file, 'w') { |f| f << mtimes_storage.to_yaml }
+          CSV.open(tmime_file, 'w') do |csv|
+            mtimes_storage.each do |k,v|
+              csv << [k, v]
+            end
+          end
         end
 
         def push(url)
@@ -93,7 +109,8 @@ module Vx
         def lock!(url)
           original_file = absolute_path(generate_file_path(url))
           lock_file = "#{original_file}.lock"
-          system "sudo mkdir -p #{File.dirname(lock_file)} && sudo chown vexor -R #{File.dirname(lock_file)}"
+          system "sudo mkdir -p #{File.dirname(lock_file)}"
+          system "sudo chown vexor -R #{File.dirname(lock_file)}" unless debug
           puts ">>> Lock file: #{original_file}"
           touch(lock_file)
         end
@@ -123,7 +140,8 @@ module Vx
         def add_path(path)
           path = File.expand_path(path)
           puts "adding #{path} to cache"
-          system "sudo mkdir -p #{path} && sudo chown vexor -R #{path}"
+          system "sudo mkdir -p #{path}"
+          system "sudo chown vexor -R #{path}" unless debug
           mtimes_storage[path] = Time.now.to_i
         end
 
@@ -163,7 +181,8 @@ module Vx
           file_path = opts[:to] || generate_file_path(url)
           resource_path = absolute_path(file_path)
           dirname = File.dirname(resource_path)
-          system "sudo mkdir -p #{dirname} && sudo chown vexor -R #{dirname}"
+          system "sudo mkdir -p #{dirname}"
+          system "sudo chown vexor -R #{dirname}" unless debug
           cmd =  "curl -m 30 -L --tcp-nodelay -f -s %p -o %p >#{cacher_dir}/fetch.log 2>#{cacher_dir}/fetch.err.log" % [url, resource_path]
           system cmd
           return file_path
@@ -250,13 +269,15 @@ module Vx
 
         def store_new_md5!(md5_file)
           directory = File.dirname(md5_file)
-          system "sudo mkdir -p #{directory} && sudo chown vexor -R #{directory}"
+          system "sudo mkdir -p #{directory}"
+          system "sudo chown vexor -R #{directory}" unless debug
           File.open(md5_file, 'w') { |f| f << generate_md5_sums.to_yaml }
         end
 
         def archive_all_paths!(target_file)
           puts "Archive to file #{target_file}"
-          tar(:c, target_file, *mtimes_storage.keys)
+          paths = mtimes_storage.map{ |i| i[0] }
+          tar(:c, target_file, *paths)
         end
 
         def tar(flag, file, *args, &block)
