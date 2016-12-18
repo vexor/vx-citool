@@ -217,7 +217,6 @@ module Vx
             else
               new_md5sums[file] = md5(file)
             end
-            puts "Generated md5 for file #{file}"
           end
           return new_md5sums
         end
