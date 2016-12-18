@@ -21,7 +21,6 @@ module Vx
           @cacher_dir = params[:cacher_dir] || DEFAULT_CACHER_DIR
           @api_host = params[:api_host] || DEFAULT_API_HOST
           @debug = ENV["VEXOR_DEBUG"]
-          puts debug
 
           @global_storage_path = File.expand_path("~/.cacher/")
           system "sudo mkdir -p #{global_storage_path}"
@@ -29,14 +28,7 @@ module Vx
           system "sudo mkdir -p #{cacher_dir}"
           system "sudo chown vexor -R #{cacher_dir}" unless debug
           @tmime_file = File.join(global_storage_path, "tmime.data")
-          @mtimes_storage = {}
-          if File.exist?(tmime_file)
-            CSV.foreach(tmime_file) do |row|
-              if row.count > 1
-                @mtimes_storage[row[0]] = row[1]
-              end
-            end
-          end
+          @mtimes_storage = File.exist?(tmime_file) ? csv_to_hash(tmime_file) : {}
         end
 
         # Fetch cache files from storage by url
@@ -66,11 +58,7 @@ module Vx
           paths.each do |path|
             add_path(path)
           end
-          CSV.open(tmime_file, 'w') do |csv|
-            mtimes_storage.each do |k,v|
-              csv << [k, v]
-            end
-          end
+          hash_to_csv(tmime_file, mtimes_storage)
         end
 
         def push(url)
@@ -81,7 +69,7 @@ module Vx
           end
           target_file = absolute_path(generate_file_path(url)) 
           @md5_file = absolute_path(generate_file_path(md5_url))
-          @md5_storage = File.exist?(md5_file) ? YAML.load_file(md5_file) : {}
+          @md5_storage = File.exist?(md5_file) ? csv_to_hash(md5_file) : {}
           with_lock(url) do
             if globaly_changed?
               puts "Cache directories or files changed..."
@@ -296,6 +284,32 @@ module Vx
 
           print(re ? " OK\n" : " FAIL\n")
           return false unless re
+        end
+
+        def hash_to_csv(filename, hsh)
+          begin
+            CSV.open(filename, 'w') do |csv|
+              hsh.each do |k,v|
+                csv << [k, v]
+              end
+            end
+          rescue
+            puts "Error to generate csv"
+          end
+        end
+
+        def csv_to_hash(filename)
+          begin
+            ret = {}
+            CSV.foreach(tmime_file) do |row|
+              if row.count > 1
+                ret[row[0]] = row[1]
+              end
+            end
+            return ret
+          rescue
+            return {}
+          end
         end
       end
     end
