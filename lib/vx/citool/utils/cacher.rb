@@ -209,13 +209,15 @@ module Vx
             new_keys = new_md5sums.keys
             if old_keys.count != new_keys.count
               puts "Old keys != new keys: (#{old_keys.count}, #{new_keys.count})"
-              return false
+              return true
             end
             new_md5sums.each do |k,v|
-              return false if v != md5_storage[k]
+              if v != md5_storage[k]
+                return true
+              end
             end
           end
-          return true
+          return false
         end
 
         def each_file
