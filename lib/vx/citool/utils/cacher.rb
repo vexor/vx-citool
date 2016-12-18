@@ -23,6 +23,7 @@ module Vx
 
           @global_storage_path = File.expand_path("~/.cacher/")
           system "sudo mkdir -p #{global_storage_path} && sudo chown vexor -R #{global_storage_path}"
+          system "sudo mkdir -p #{cacher_dir} && sudo chown vexor -R #{cacher_dir}"
           @tmime_file = File.join(global_storage_path, "tmime.yml")
           @mtimes_storage = File.exist?(tmime_file) ? YAML.load_file(tmime_file) : {}
         end
