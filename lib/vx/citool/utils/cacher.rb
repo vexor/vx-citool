@@ -227,6 +227,7 @@ module Vx
           puts "Generate new md5_sum file"
           @new_md5sums ||= {}
           return @new_md5sums if @new_md5sums.keys.count > 0
+          new_md5sums = {}
           each_file do |file, mtime|
             if unchanged_mtime?(file, mtime) && md5_storage[file]
               new_md5sums[file] = (md5_storage[file] || md5(file))
