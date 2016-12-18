@@ -1,5 +1,4 @@
 require 'open-uri'
-require 'json'
 require 'yaml'
 require 'shellwords'
 require 'fileutils'
