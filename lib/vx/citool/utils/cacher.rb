@@ -50,6 +50,7 @@ module Vx
         end
 
         def add(*paths)
+          puts ">> Add some paths to cache"
           paths.each do |path|
             add_path(path)
           end
