@@ -130,7 +130,7 @@ module Vx
 
         def decode_urls(url)
           data = open(url, allow_redirections: :safe) {|io| io.gets }
-          return JSON.parse(data)
+          return data.split(/\s+/)
         end
 
         def cache_was_updated?(url, md5_url)
