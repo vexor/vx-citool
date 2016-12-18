@@ -259,7 +259,7 @@ module Vx
           directory = File.dirname(md5_file)
           system "sudo mkdir -p #{directory}"
           system "sudo chown vexor -R #{directory}" unless debug
-          File.open(md5_file, 'w') { |f| f << generate_md5_sums.to_yaml }
+          hash_to_csv(md5_file, generate_md5_sums)
         end
 
         def archive_all_paths!(target_file)
