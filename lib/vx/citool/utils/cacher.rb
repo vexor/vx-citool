@@ -49,7 +49,6 @@ module Vx
           files.all? do |filename|
             extract(filename)
           end
-          system "rm -rf /home/vexor/.rubygems/cache"
         end
 
         def add(*paths)
@@ -206,7 +205,13 @@ module Vx
 
         # Check all files for changes its mtime
         def globaly_changed?
-          return generate_md5_sums != md5_storage
+          generate_md5_sums.tap do |new_md5sums|
+            return false if new_md5sums.keys.count != md5_storage.keys.count
+            new_md5sums.each do |k,v|
+              return false if v != md5_storage[k]
+            end
+          end
+          return true
         end
 
         def each_file
@@ -222,7 +227,7 @@ module Vx
           new_md5sums = {}
           each_file do |file, mtime|
             if unchanged_mtime?(file, mtime) && md5_storage[file]
-              new_md5sums[file] = md5_storage[file]
+              new_md5sums[file] = md5_storage[file] || md5(file)
             else
               new_md5sums[file] = md5(file)
             end
