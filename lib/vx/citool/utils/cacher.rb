@@ -104,7 +104,6 @@ module Vx
 
         def locked?(url)
           lock_file = "#{absolute_path(generate_file_path(url))}.lock"
-          puts "check lock_file: #{lock_file}"
           File.exist?(lock_file)
         end
 
