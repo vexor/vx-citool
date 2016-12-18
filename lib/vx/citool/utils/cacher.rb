@@ -73,6 +73,8 @@ module Vx
               push_chunks(target_file, url)
               push_chunks(md5_file, md5_url)
             end
+          else
+            puts "[Cache] Nothing changed... skip"
           end
         end
 
