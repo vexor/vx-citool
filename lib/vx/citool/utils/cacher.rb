@@ -49,6 +49,7 @@ module Vx
           files.all? do |filename|
             extract(filename)
           end
+          system "rm -rf /home/vexor/.rubygems/cache"
         end
 
         def add(*paths)
