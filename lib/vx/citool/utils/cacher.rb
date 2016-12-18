@@ -59,14 +59,20 @@ module Vx
 
         def push(url)
           url, md5_url = *decode_urls(url)
+          if locked?(url)
+            puts "--> Pushing now in other job... skip pushing "
+            return
+          end
           target_file = absolute_path(generate_file_path(url)) 
           @md5_file = absolute_path(generate_file_path(md5_url))
           @md5_storage = File.exist?(md5_file) ? YAML.load(md5_file) : {}
           if globaly_changed?
-            generate_new_md5!(md5_file)
-            archive_all_paths!(target_file)
-            push_chunks(target_file, url)
-            push_chunks(md5_file, md5_url)
+            with_lock(url) do
+              generate_new_md5!(md5_file)
+              archive_all_paths!(target_file)
+              push_chunks(target_file, url)
+              push_chunks(md5_file, md5_url)
+            end
           end
         end
 
