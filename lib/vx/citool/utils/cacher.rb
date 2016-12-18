@@ -1,5 +1,3 @@
-$:.unshift(File.expand_path("~/.rubygems"))
-
 require 'open-uri'
 require 'yaml'
 require 'shellwords'
@@ -66,8 +64,7 @@ module Vx
           end
           target_file = absolute_path(generate_file_path(url)) 
           @md5_file = absolute_path(generate_file_path(md5_url))
-          @md5_storage = File.exist?(md5_file) ? YAML.load(md5_file) : {}
-          puts @md5_storage.inspect
+          @md5_storage = File.exist?(md5_file) ? YAML.load_file(md5_file) : {}
           puts md5_storage.inspect
           if globaly_changed?
             with_lock(url) do
