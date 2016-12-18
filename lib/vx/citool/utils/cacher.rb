@@ -12,8 +12,8 @@ module Vx
         attr_reader :cacher_dir, :api_host
         attr_reader :global_storage_path
         attr_reader :tmime_file, :mtimes_storage
-        attr_reader :md5_file, :md5_storage
-        attr_reader :debug
+        attr_reader :md5_file, :md5_storage, :md5_local_file, :md5_local_storage
+        attr_reader :debug, :current_user
         DEFAULT_CACHER_DIR = "/opt/vexor/cache"
         DEFAULT_API_HOST = "https://ci.vexor.io:8080"
 
@@ -21,14 +21,16 @@ module Vx
           @cacher_dir = params[:cacher_dir] || DEFAULT_CACHER_DIR
           @api_host = params[:api_host] || DEFAULT_API_HOST
           @debug = ENV["VEXOR_DEBUG"]
+          @current_user = ENV["USER"] || "vexor"
 
           @global_storage_path = File.expand_path("~/.cacher/")
-          system "sudo mkdir -p #{global_storage_path}"
-          system "sudo chown vexor -R #{global_storage_path}" unless debug
-          system "sudo mkdir -p #{cacher_dir}"
-          system "sudo chown vexor -R #{cacher_dir}" unless debug
+          system "sudo mkdir -p #{global_storage_path} && sudo chown -R #{current_user} #{global_storage_path}"
+          system "sudo mkdir -p #{cacher_dir} && sudo chown -R #{current_user} #{cacher_dir}"
           @tmime_file = File.join(global_storage_path, "tmime.data")
           @mtimes_storage = File.exist?(tmime_file) ? csv_to_hash(tmime_file) : {}
+          @md5_local_file = File.join(global_storage_path, "local.md5")
+          @md5_local_storage = File.exist?(md5_local_file) ? csv_to_hash(md5_local_file) : {}
+          puts "#{md5_local_file} : #{md5_local_storage.keys.count}"
         end
 
         # Fetch cache files from storage by url
@@ -59,6 +61,8 @@ module Vx
             add_path(path)
           end
           hash_to_csv(tmime_file, mtimes_storage)
+          # Store md5sums to local md5 storage
+          hash_to_csv(md5_local_file, generate_md5_sums)
         end
 
         def push(url)
@@ -78,7 +82,7 @@ module Vx
               push_chunks(target_file, url)
               push_chunks(md5_file, md5_url)
             else
-              puts "[Cache] Nothing changed... skip"
+              puts "[CACHE] Nothing changed... skip"
             end
           end
         end
@@ -97,8 +101,7 @@ module Vx
         def lock!(url)
           original_file = absolute_path(generate_file_path(url))
           lock_file = "#{original_file}.lock"
-          system "sudo mkdir -p #{File.dirname(lock_file)}"
-          system "sudo chown vexor -R #{File.dirname(lock_file)}" unless debug
+          system "sudo mkdir -p #{File.dirname(lock_file)} && sudo chown -R #{current_user} #{File.dirname(lock_file)}"
           puts ">>> Lock file: #{original_file}"
           touch(lock_file)
         end
@@ -128,8 +131,7 @@ module Vx
         def add_path(path)
           path = File.expand_path(path)
           puts "adding #{path} to cache"
-          system "sudo mkdir -p #{path}"
-          system "sudo chown vexor -R #{path}" unless debug
+          system "sudo mkdir -p #{path} && sudo chown -R #{current_user} #{path}"
           mtimes_storage[path] = Time.now.to_i
         end
 
@@ -169,8 +171,7 @@ module Vx
           file_path = opts[:to] || generate_file_path(url)
           resource_path = absolute_path(file_path)
           dirname = File.dirname(resource_path)
-          system "sudo mkdir -p #{dirname}"
-          system "sudo chown vexor -R #{dirname}" unless debug
+          system "sudo mkdir -p #{dirname} && sudo chown -R #{current_user} #{dirname}"
           cmd =  "curl -m 30 -L --tcp-nodelay -f -s %p -o %p >#{cacher_dir}/fetch.log 2>#{cacher_dir}/fetch.err.log" % [url, resource_path]
           system cmd
           return file_path
@@ -215,14 +216,15 @@ module Vx
         # Check all files for changes its mtime
         def globaly_changed?
           generate_md5_sums.tap do |new_md5sums|
-            old_keys = md5_storage.keys
+            old_keys = md5_local_storage.keys
             new_keys = new_md5sums.keys
             if old_keys.count != new_keys.count
               puts "Old keys != new keys: (#{old_keys.count}, #{new_keys.count})"
               return true
             end
             new_md5sums.each do |k,v|
-              if v != md5_storage[k]
+              if v != md5_local_storage[k]
+                puts "Updated files finded..."
                 return true
               end
             end
@@ -257,8 +259,7 @@ module Vx
 
         def store_new_md5!(md5_file)
           directory = File.dirname(md5_file)
-          system "sudo mkdir -p #{directory}"
-          system "sudo chown vexor -R #{directory}" unless debug
+          system "sudo mkdir -p #{directory} && sudo chown -R #{current_user} #{directory}"
           hash_to_csv(md5_file, generate_md5_sums)
         end
 
@@ -301,7 +302,7 @@ module Vx
         def csv_to_hash(filename)
           begin
             ret = {}
-            CSV.foreach(tmime_file) do |row|
+            CSV.foreach(filename) do |row|
               if row.count > 1
                 ret[row[0]] = row[1]
               end
