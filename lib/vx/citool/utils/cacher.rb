@@ -1,3 +1,5 @@
+$:.unshift(File.expand_path("~/.rubygems"))
+
 require 'open-uri'
 require 'yaml'
 require 'shellwords'
