@@ -216,6 +216,7 @@ module Vx
 
         def each_file
           mtimes_storage.each do |path, mtime|
+            puts "... for file/directory: #{path}"
             Dir.glob("#{path}/**/*") do |file|
               yield file, mtime unless File.directory?(file)
             end
