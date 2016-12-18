@@ -88,15 +88,17 @@ module Vx
         end
 
         def lock!(url)
-          lock_file = "#{absolute_path(generate_file_path(url))}.lock"
+          original_file = absolute_path(generate_file_path(url))
+          lock_file = "#{original_file}.lock"
           system "sudo mkdir -p #{File.dirname(lock_file)} && sudo chown vexor -R #{File.dirname(lock_file)}"
-          puts ">>> Lock download file: #{lock_file}"
+          puts ">>> Lock file: #{original_file}"
           touch(lock_file)
         end
 
         def unlock!(url)
-          lock_file = "#{absolute_path(generate_file_path(url))}.lock"
-          puts ">>> Unlock download file: #{lock_file}"
+          original_file = absolute_path(generate_file_path(url))
+          lock_file = "#{original_file}.lock"
+          puts ">>> Unlock file: #{original_file}"
           rm_rf(lock_file)
         end
 
