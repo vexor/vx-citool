@@ -67,7 +67,7 @@ module Vx
           @md5_storage = File.exist?(md5_file) ? YAML.load_file(md5_file) : {}
           if globaly_changed?
             with_lock(url) do
-              generate_new_md5!(md5_file)
+              store_new_md5!(md5_file)
               archive_all_paths!(target_file)
               push_chunks(target_file, url)
               push_chunks(md5_file, md5_url)
@@ -225,7 +225,8 @@ module Vx
 
         def generate_md5_sums
           puts "Generate new md5_sum file"
-          new_md5sums = {}
+          @new_md5sums ||= {}
+          return @new_md5sums if @new_md5sums.keys.count > 0
           each_file do |file, mtime|
             if unchanged_mtime?(file, mtime) && md5_storage[file]
               new_md5sums[file] = (md5_storage[file] || md5(file))
@@ -233,10 +234,11 @@ module Vx
               new_md5sums[file] = md5(file)
             end
           end
-          return new_md5sums
+          @new_md5sums = new_md5sums
+          return @new_md5sums
         end
 
-        def generate_new_md5!(md5_file)
+        def store_new_md5!(md5_file)
           directory = File.dirname(md5_file)
           system "sudo mkdir -p #{directory} && sudo chown vexor -R #{directory}"
           File.open(md5_file, 'w') { |f| f << generate_md5_sums.to_yaml }
