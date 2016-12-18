@@ -114,7 +114,7 @@ module Vx
         end
 
         def locked?(url)
-          File.exist?(lock_file)
+          File.exist?(lock_file(url))
         end
 
         def wait_while_locked!(url, timeout)
