@@ -1,4 +1,4 @@
-#!/usr/bin/env ruby
+#!/usr/local/bin/ruby
 require File.expand_path('../../utils/cacher', __FILE__)
 
 class CasherCLI
