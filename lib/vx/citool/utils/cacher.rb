@@ -32,7 +32,7 @@ module Vx
           puts "--> Attempting to download cache archive"
           files = urls.map do |url|
             url, md5_url = *decode_urls(url)
-            if cache_was_updated?(url, md5_url) && !locked?(url)
+            if !locked?(url) && cache_was_updated?(url, md5_url)
               puts "--> Cache was updated... Download new file from storage"
               with_lock(url) do
                 store_url(url)
@@ -65,16 +65,16 @@ module Vx
           target_file = absolute_path(generate_file_path(url)) 
           @md5_file = absolute_path(generate_file_path(md5_url))
           @md5_storage = File.exist?(md5_file) ? YAML.load_file(md5_file) : {}
-          if globaly_changed?
-            puts "Cache directories or files changed..."
-            with_lock(url) do
+          with_lock(url) do
+            if globaly_changed?
+              puts "Cache directories or files changed..."
               store_new_md5!(md5_file)
               archive_all_paths!(target_file)
               push_chunks(target_file, url)
               push_chunks(md5_file, md5_url)
+            else
+              puts "[Cache] Nothing changed... skip"
             end
-          else
-            puts "[Cache] Nothing changed... skip"
           end
         end
 
