@@ -207,7 +207,10 @@ module Vx
           generate_md5_sums.tap do |new_md5sums|
             old_keys = md5_storage.keys
             new_keys = new_md5sums.keys
-            return false if old_keys.count != new_keys.count
+            if old_keys.count != new_keys.count
+              puts "Old keys != new keys: (#{old_keys.count}, #{new_keys.count})"
+              return false
+            end
             new_md5sums.each do |k,v|
               return false if v != md5_storage[k]
             end
