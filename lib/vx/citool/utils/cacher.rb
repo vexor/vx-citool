@@ -206,7 +206,9 @@ module Vx
         # Check all files for changes its mtime
         def globaly_changed?
           generate_md5_sums.tap do |new_md5sums|
-            return false if new_md5sums.keys.count != md5_storage.keys.count
+            old_keys = md5_storage.keys
+            new_keys = new_md5sums.keys
+            return false if old_keys.count != new_keys.count
             new_md5sums.each do |k,v|
               return false if v != md5_storage[k]
             end
@@ -227,7 +229,7 @@ module Vx
           new_md5sums = {}
           each_file do |file, mtime|
             if unchanged_mtime?(file, mtime) && md5_storage[file]
-              new_md5sums[file] = md5_storage[file] || md5(file)
+              new_md5sums[file] = (md5_storage[file] || md5(file))
             else
               new_md5sums[file] = md5(file)
             end
