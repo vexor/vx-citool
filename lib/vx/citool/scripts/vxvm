@@ -124,9 +124,9 @@ vxvm_install () {
   sudo mkdir -p $pkg_install_cache_path
   sudo chown vexor $pkg_install_cache_path
   if [ -d $pkg_install_cache_path/$id ] ; then
-      sudo rm -rf $pkg_install_path/$id
-      sudo ln -s $pkg_install_cache_path/$id $pkg_install_path/$id
-      sudo chown vexor -R $pkg_install_path/$id
+      silent_output sudo rm -rf $pkg_install_path/$id
+      silent_output sudo ln -s $pkg_install_cache_path/$id $pkg_install_path/$id
+      silent_output sudo chown vexor -R $pkg_install_path/$id
   fi
 
   if [ ! -d $pkg_install_path/$id ] ; then
@@ -135,9 +135,10 @@ vxvm_install () {
 
     $curl ${pkg_host}/${package_path} > $tmp_file
     silent_output $dpkg -i $tmp_file
-    sudo mv $pkg_install_path/$id $pkg_install_cache_path/$id
-    sudo chown vexor -R $pkg_install_cache_path/$id
-    ln -s $pkg_install_cache_path/$id $pkg_install_path/$id
+    silent_output sudo mv $pkg_install_path/$id $pkg_install_cache_path/$id
+    silent_output sudo chown vexor -R $pkg_install_cache_path/$id
+    silent_output sudo ln -s $pkg_install_cache_path/$id $pkg_install_path/$id
+    silent_output sudo chown vexor -R $pkg_install_path/$id
     rm -rf $tmp_dir
   fi
 
