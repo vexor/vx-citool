@@ -125,7 +125,7 @@ vxvm_install () {
   mkdir -p $pkg_install_cache_path
   if [ -d $pkg_install_cache_path/$id ] ; then
       echo "Use local copy..."
-      rm -rf $pkg_install_path/$id
+      sudo rm -rf $pkg_install_path/$id
       ln -s $pkg_install_cache_path/$id $pkg_install_path/$id
   fi
 
