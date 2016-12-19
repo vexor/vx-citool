@@ -136,7 +136,8 @@ vxvm_install () {
 
     $curl ${pkg_host}/${package_path} > $tmp_file
     silent_output $dpkg -i $tmp_file
-    mv $pkg_install_path/$id $pkg_install_cache_path/$id
+    sudo mv $pkg_install_path/$id $pkg_install_cache_path/$id
+    sudo chown vexor -R $pkg_install_cache_path/$id
     ln -s $pkg_install_cache_path/$id $pkg_install_path/$id
     rm -rf $tmp_dir
   fi
