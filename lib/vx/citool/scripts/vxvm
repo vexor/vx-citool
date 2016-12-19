@@ -7,7 +7,6 @@ pkg_prefix="vx-packages-"
 pkg_metadata="dists/trusty/COMPONENT/binary-amd64/Packages"
 pkg_host=${PKG_HOST:-http://new-repos.s3-website-us-west-1.amazonaws.com}
 pkg_install_path="/opt/vexor/packages"
-pkg_install_cache_path="/opt/vexor/cache/packages"
 
 #
 awk=${AWK:-awk}
@@ -122,24 +121,13 @@ vxvm_install () {
 
   local id=$(vxvm_extract_id)
 
-  mkdir -p $pkg_install_cache_path
-  if [ -d $pkg_install_cache_path/$id ] ; then
-      echo "Use local copy..."
-      sudo rm -rf $pkg_install_path/$id
-      sudo ln -s $pkg_install_cache_path/$id $pkg_install_path/$id
-  fi
-
   if [ ! -d $pkg_install_path/$id ] ; then
     local tmp_dir=$($mktemp -d)
     local tmp_file=$tmp_dir/$package_name
 
     $curl ${pkg_host}/${package_path} > $tmp_file
     silent_output $dpkg -i $tmp_file
-
-    mv $pkg_install_path/$id $pkg_install_cache_path/$id
-    ln -s $pkg_install_cache_path/$id $pkg_install_path/$id
-
-    sudo rm -rf $tmp_dir
+    rm -rf $tmp_dir
   fi
 
   echo $pkg_install_path/$id/activate
