@@ -4,10 +4,9 @@ set -e
 
 #
 pkg_prefix="vx-packages-"
-pkg_metadata="dists/trusty/COMPONENT/binary-amd64/Packages"
-pkg_host=${PKG_HOST:-http://new-repos.s3-website-us-west-1.amazonaws.com}
+pkg_metadata="dists/trusty/main/binary-amd64/Packages"
+pkg_host=${PKG_HOST:-http://repo-us1-vexor-io.s3-website-us-west-1.amazonaws.com}
 pkg_install_path="/opt/vexor/packages"
-pkg_install_cache_path="/opt/vexor/cache/packages"
 
 #
 awk=${AWK:-awk}
@@ -55,11 +54,10 @@ vxvm_search_in_repo () {
   local lang=$1
   local version=$2
   local regexp="${pkg_prefix}${lang}-${version}"
-  local pkg_metadata_component="${pkg_metadata/COMPONENT/$lang}"
 
   # download metadata
   local metadata=$($mktemp)
-  $curl ${pkg_host}/${pkg_metadata_component} |  \
+  $curl ${pkg_host}/${pkg_metadata} |  \
     $awk '/Package/{ print $2} ; /Filename/ { print $2 }' | \
     xargs -n2 | \
     sort -r > $metadata
@@ -121,13 +119,6 @@ vxvm_install () {
   vxvm_valid_package_url
 
   local id=$(vxvm_extract_id)
-  sudo mkdir -p $pkg_install_cache_path
-  sudo chown vexor $pkg_install_cache_path
-  if [ -d $pkg_install_cache_path/$id ] ; then
-      silent_output sudo rm -rf $pkg_install_path/$id
-      silent_output sudo ln -s $pkg_install_cache_path/$id $pkg_install_path/$id
-      silent_output sudo chown vexor -R $pkg_install_path/$id
-  fi
 
   if [ ! -d $pkg_install_path/$id ] ; then
     local tmp_dir=$($mktemp -d)
@@ -135,10 +126,6 @@ vxvm_install () {
 
     $curl ${pkg_host}/${package_path} > $tmp_file
     silent_output $dpkg -i $tmp_file
-    silent_output sudo mv $pkg_install_path/$id $pkg_install_cache_path/$id
-    silent_output sudo chown vexor -R $pkg_install_cache_path/$id
-    silent_output sudo ln -s $pkg_install_cache_path/$id $pkg_install_path/$id
-    silent_output sudo chown vexor -R $pkg_install_path/$id
     rm -rf $tmp_dir
   fi
 

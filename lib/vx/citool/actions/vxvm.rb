@@ -8,12 +8,11 @@ module Vx
         re = invoke_shell("#{vxvm} install #{args}", silent: true, title: "vxvm install #{args}")
         return re unless re.success?
 
-        # user = ENV['USER']
-        # unless user == ""
-        #   # re_chown = invoke_shell("sudo chown -R #{user} /opt/vexor/packages")
-        #   re_chown = invoke_shell("sudo find /opt/vexor/packages/* | xargs chown #{user}")
-        #   return re_chown unless re_chown.success?
-        # end
+        user = ENV['USER']
+        unless user == ""
+          re_chown = invoke_shell("sudo chown -R #{user} /opt/vexor/packages")
+          return re_chown unless re_chown.success?
+        end
 
         invoke_shell_source(re.data.strip)
       end
