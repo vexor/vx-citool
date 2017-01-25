@@ -20,6 +20,7 @@ module Vx
       end
 
       def log_stage(name)
+        self.current_stage = name
         if true #debug?
           rs = nil
           log name.start_stage
@@ -37,6 +38,14 @@ module Vx
 
       def log(name)
         puts name
+      end
+
+      def current_stage
+        Thread.current[:stage] || "init"
+      end
+
+      def current_stage=(value)
+        Thread.current[:stage] = value
       end
 
     end
