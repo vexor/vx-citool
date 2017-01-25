@@ -7,4 +7,6 @@ class String
   def magenta;        "\033[35m#{self}\033[0m" end
   def cyan;           "\033[36m#{self}\033[0m" end
   def gray;           "\033[37m#{self}\033[0m" end
+  def start_stage;    "[>>vx-stage:start name=#{self}]" end
+  def end_stage(tm);  "[>>vx-stage:end name=#{self} duration=#{tm}]" end
 end

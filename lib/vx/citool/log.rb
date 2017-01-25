@@ -22,9 +22,9 @@ module Vx
       def log_stage(name)
         if true #debug?
           rs = nil
-          log "[stage:#{name}:begin]".gray
+          log name.start_stage
           tm = Benchmark.measure { rs = yield }
-          log "[stage:#{name}:end #{tm.real}]".gray
+          log name.end_stage(tm.real)
           rs
         else
           yield
