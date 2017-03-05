@@ -149,20 +149,11 @@ test:
           end
 
           def setup
-            re = owner.invoke_shell "bundle exec rake db:create"
-            return re unless re.success?
+            tasks = ['db:create']
+            tasks << 'db:schema:load' if File.exists?('db/schema.rb')
+            tasks << 'db:migrate' if File.directory?('db/migrate')
 
-            if File.exists?("db/schema.rb")
-              re = owner.invoke_shell("bundle exec rake db:schema:load", silent: true)
-              return re unless re.success?
-            end
-
-            if File.directory?("db/migrate")
-              re = owner.invoke_shell("bundle exec rake db:migrate", silent: true)
-              return re unless re.success?
-            end
-
-            re
+            owner.invoke_shell("bundle exec rake #{tasks.join(' ')}", silent: true)
           end
 
           # TODO: remove
