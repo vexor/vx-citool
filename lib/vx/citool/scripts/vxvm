@@ -82,7 +82,7 @@ vxvm_extract_id () {
 
 vxvm_valid_package_url () {
   if [ "x$package_path" = "x" ] ; then
-    echoerr "cannot found $lang $version"
+    echoerr "cannot find $lang $version"
     exit 1
   fi
 }
@@ -152,7 +152,7 @@ vxvm_location () {
   )
 
   test -d $pkg_install_path/$id || (
-    echoerr "cannot found $lang $version"
+    echoerr "cannot find $lang $version"
     exit 1
   )
 }
@@ -188,7 +188,7 @@ vxvm_use () {
   local id=$(vxvm_extract_id)
 
   test -d $pkg_install_path/$id || (
-    echoerr "cannot found $lang $version"
+    echoerr "cannot find $lang $version"
     exit 1
   )
 
