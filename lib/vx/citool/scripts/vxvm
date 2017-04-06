@@ -67,8 +67,6 @@ vxvm_search_in_repo () {
   package_path=$(cat $metadata | $awk -v ref="$regexp " 'match($0, ref){ print $2 }' | head -n1)
   package_name=$(cat $metadata | $awk -v ref="$regexp " 'match($0, ref){ print $1 }' | head -n1)
 
-  echo "PP: $package_path"
-
   if [ "x$package_name" = "x" ] ; then
     # fuzzy match
     package_path=$(cat $metadata | sort -r | $awk -v ref="$regexp" 'match($0, ref){ print $2}' | head -n1)
