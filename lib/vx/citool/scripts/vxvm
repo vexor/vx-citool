@@ -4,8 +4,8 @@ set -e
 
 #
 pkg_prefix="vx-packages-"
-pkg_metadata="dists/trusty/COMPONENT/binary-amd64/Packages"
-pkg_host=${PKG_HOST:-http://new-repos.s3-website-us-west-1.amazonaws.com}
+pkg_metadata="dists/stable/COMPONENT/binary-amd64/Packages"
+pkg_host=${PKG_HOST:-http://vexor-repo.s3-website-us-west-1.amazonaws.com}
 pkg_install_path="/opt/vexor/packages"
 
 #
@@ -66,6 +66,8 @@ vxvm_search_in_repo () {
   # strict match
   package_path=$(cat $metadata | $awk -v ref="$regexp " 'match($0, ref){ print $2 }' | head -n1)
   package_name=$(cat $metadata | $awk -v ref="$regexp " 'match($0, ref){ print $1 }' | head -n1)
+
+  echo "PP: $package_path"
 
   if [ "x$package_name" = "x" ] ; then
     # fuzzy match
