@@ -4,8 +4,8 @@ set -e
 
 #
 pkg_prefix="vx-packages-"
-pkg_metadata="dists/trusty/COMPONENT/binary-amd64/Packages"
-pkg_host=${PKG_HOST:-http://new-repos.s3-website-us-west-1.amazonaws.com}
+pkg_metadata="dists/stable/COMPONENT/binary-amd64/Packages"
+pkg_host=${PKG_HOST:-http://vexor-repo.s3-website-us-west-1.amazonaws.com}
 pkg_install_path="/opt/vexor/packages"
 
 #
