@@ -4,7 +4,7 @@ module Vx
       DEFAULT_GIT_ARGS = "--depth=50"
 
       def invoke_git_clone(args, options = {})
-        cmd = "git clone"
+        cmd = "git clone "
 
         if args["git_args"].to_a != []
           cmd << args["git_args"].to_a.join(" ")
