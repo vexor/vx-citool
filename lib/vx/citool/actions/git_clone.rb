@@ -3,7 +3,17 @@ module Vx
     module Actions
 
       def invoke_git_clone(args, options = {})
-        cmd = "git clone --depth=50"
+        cmd = "git clone"
+
+        if args["depth"] && args["depth"].to_i > 0
+          cmd << " --depth=#{args["depth"].to_i}"
+        else
+          cmd << " --depth=50"
+        end
+
+        if args.key? "no-single-branch"
+          cmd << " --no-single-branch"
+        end
 
         if args["branch"] and !args["pr"]
           cmd << " --branch #{args["branch"]}"
