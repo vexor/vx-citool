@@ -1,9 +1,16 @@
 module Vx
   module Citool
     module Actions
+      DEFAULT_GIT_ARGS = "--depth=50"
 
       def invoke_git_clone(args, options = {})
-        cmd = "git clone --depth=50"
+        cmd = "git clone "
+
+        if args["git_args"].to_a != []
+          cmd << args["git_args"].to_a.join(" ")
+        else
+          cmd << DEFAULT_GIT_ARGS
+        end
 
         if args["branch"] and !args["pr"]
           cmd << " --branch #{args["branch"]}"
