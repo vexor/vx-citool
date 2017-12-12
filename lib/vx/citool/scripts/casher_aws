@@ -117,7 +117,7 @@ class Casher
   def each_file
     @mtimes.each do |path, mtime|
       Dir.glob("#{path}/**/*") do |file|
-        yield file, mtime unless File.directory?(file)
+        yield file, mtime unless (File.directory?(file) || File.symlink?(file))
       end
     end
   end
