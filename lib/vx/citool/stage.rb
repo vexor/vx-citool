@@ -84,9 +84,7 @@ module Vx
       private
 
       def add_env(name, value)
-        if value.size > 1096
-          Env.export!(name, value)
-        end
+        Env.export!(name, value)
       end
 
     end
